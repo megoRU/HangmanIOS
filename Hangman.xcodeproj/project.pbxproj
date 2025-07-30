@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		93BFDA0B2E3A4595001A19F4 /* Hangman.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hangman.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		93BFDA0B2E3A4595001A19F4 /* Hangman.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Hangman.app; path = "/Users/mego/github/Hangman/build/Debug-iphoneos/Hangman.app"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -33,16 +33,7 @@
 			isa = PBXGroup;
 			children = (
 				93BFDA0D2E3A4595001A19F4 /* Hangman */,
-				93BFDA0C2E3A4595001A19F4 /* Products */,
 			);
-			sourceTree = "<group>";
-		};
-		93BFDA0C2E3A4595001A19F4 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				93BFDA0B2E3A4595001A19F4 /* Hangman.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -95,7 +86,7 @@
 			mainGroup = 93BFDA022E3A4595001A19F4;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 93BFDA0C2E3A4595001A19F4 /* Products */;
+			productRefGroup = 93BFDA022E3A4595001A19F4;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
