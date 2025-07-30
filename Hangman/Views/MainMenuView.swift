@@ -1,13 +1,17 @@
-//
-//  ContentView.swift
-//  Hangman
-//
-//  Created by mego on 30.07.2025.
-//
-
 import SwiftUI
 
 struct MainMenuView: View {
+    @AppStorage("appTheme") private var selectedTheme = "system"
+    @Environment(\.colorScheme) var systemScheme
+
+    var preferredScheme: ColorScheme? {
+        switch selectedTheme {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
+        }
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 40) {
@@ -32,16 +36,30 @@ struct MainMenuView: View {
                         .font(.title2)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.gray.opacity(0.3))
-                        .foregroundColor(.black)
+                        .background(
+                            (preferredScheme == .dark || (preferredScheme == nil && systemScheme == .dark))
+                                ? Color.gray.opacity(0.6)
+                                : Color.gray.opacity(0.3)
+                        )
+                        .foregroundColor(
+                            (preferredScheme == .dark || (preferredScheme == nil && systemScheme == .dark))
+                                ? .white
+                                : .black
+                        )
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
 
+
                 Spacer()
             }
             .navigationTitle("Главное меню")
+            .toolbarBackground(
+                preferredScheme == .dark ? Color.black : Color.white,
+                for: .navigationBar
+            )
         }
+        .preferredColorScheme(preferredScheme)
     }
 }
 

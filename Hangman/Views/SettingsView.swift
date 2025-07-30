@@ -1,18 +1,28 @@
-//
-//  SettingsView.swift
-//  Hangman
-//
-//  Created by mego on 30.07.2025.
-//
-
 import SwiftUI
+
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+    
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .system: return "Системная"
+        case .light: return "Светлая"
+        case .dark: return "Тёмная"
+        }
+    }
+}
 
 struct SettingsView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
+    @AppStorage("appTheme") private var selectedTheme = AppTheme.system.rawValue
     
     let languages = ["EN": "English", "RU": "Русский"]
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+    let themes = AppTheme.allCases
     
     var body: some View {
         Form {
@@ -33,6 +43,21 @@ struct SettingsView: View {
                 }
             }
             
+            Section(header: Text("Тема")) {
+                Picker("Тема", selection: $selectedTheme) {
+                    ForEach(themes) { theme in
+                        Text(theme.displayName).tag(theme.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: selectedTheme) { oldValue, newValue in
+                    applyTheme(AppTheme(rawValue: newValue) ?? .system)
+                }
+                .onAppear {
+                    applyTheme(AppTheme(rawValue: selectedTheme) ?? .system)
+                }
+            }
+            
             Section(header: Text("Информация")) {
                 HStack {
                     Text("Версия")
@@ -43,6 +68,20 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Настройки")
+    }
+    
+    private func applyTheme(_ theme: AppTheme) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else { return }
+        
+        switch theme {
+        case .system:
+            window.overrideUserInterfaceStyle = .unspecified
+        case .light:
+            window.overrideUserInterfaceStyle = .light
+        case .dark:
+            window.overrideUserInterfaceStyle = .dark
+        }
     }
 }
 
