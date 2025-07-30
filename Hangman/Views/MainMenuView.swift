@@ -3,6 +3,9 @@ import SwiftUI
 struct MainMenuView: View {
     @AppStorage("appTheme") private var selectedTheme = "system"
     @Environment(\.colorScheme) var systemScheme
+    
+    @State private var attemptsLeft = 8
+    private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var preferredScheme: ColorScheme? {
         switch selectedTheme {
@@ -19,6 +22,14 @@ struct MainMenuView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .padding(.top, 60)
+                
+                // Анимация смены изображений
+                Image(String(attemptsLeft))
+                    .resizable()
+                    .scaledToFit()
+                    .onReceive(timer) { _ in
+                        attemptsLeft = (attemptsLeft + 1) % 9
+                    }
 
                 NavigationLink(destination: GameView()) {
                     Text("🎮 Начать игру")
@@ -50,10 +61,10 @@ struct MainMenuView: View {
                         .padding(.horizontal)
                 }
 
-
                 Spacer()
             }
-            .navigationTitle("Главное меню")
+            .navigationTitle("Главная")
+            .toolbar(.hidden, for: .navigationBar)
             .toolbarBackground(
                 preferredScheme == .dark ? Color.black : Color.white,
                 for: .navigationBar

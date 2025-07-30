@@ -9,6 +9,8 @@ struct GameView: View {
     @State private var attemptsLeft = 8
     @State private var isLoading = true
     
+    let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+    
     private var displayedWord: String {
         wordToGuess.map { guessedLetters.contains($0) ? String($0) : "_" }.joined(separator: " ")
     }
@@ -51,7 +53,21 @@ struct GameView: View {
             }
         }
         .padding()
-        .navigationTitle("Hangman")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 2) {
+                    Text("Hangman")
+                        .font(.system(size: 24, weight: .bold))
+
+                    Text("Категория: \(categories[selectedCategory, default: "Любая"])")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.gray)
+
+                }
+                .multilineTextAlignment(.center)
+            }
+        }
+        .navigationTitle("") // скрываем стандартный заголовок
         .alert("Игра окончена", isPresented: .constant(gameOver())) {
             Button("OK") {
                 resetGame()
@@ -101,9 +117,9 @@ private func fontSize(for length: Int) -> CGFloat {
     switch length {
     case 0...5: return 40
     case 6...8: return 32
-    case 9...12: return 26
-    case 13...16: return 20
-    case 17...20: return 18
+    case 9...12: return 24
+    case 13...16: return 18
+    case 17...20: return 16
     default: return 16
     }
 }
