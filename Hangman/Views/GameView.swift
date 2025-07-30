@@ -11,14 +11,15 @@ struct GameView: View {
     
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
-    private var displayedWord: String {
-        wordToGuess.map { guessedLetters.contains($0) ? String($0) : "_" }.joined(separator: " ")
-    }
-    
     private var alphabet: [Character] {
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
         : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    }
+    
+    private var displayedWord: String {
+        let spaced = wordToGuess.map { guessedLetters.contains($0) ? String($0) : "_" }.joined(separator: "\u{2007}")
+        return spaced
     }
     
     var body: some View {
@@ -31,7 +32,10 @@ struct GameView: View {
                     .scaledToFit()
                 
                 Text(displayedWord)
-                    .font(.system(size: fontSize(for: wordToGuess.count), weight: .bold, design: .monospaced))
+                    .font(.system(size: fontSize(for: displayedWord), weight: .bold, design: .monospaced))
+                    .lineLimit(1)                 // запрещаем перенос
+                    .minimumScaleFactor(0.5)     // уменьшаем шрифт, чтобы поместилось
+                    .truncationMode(.tail)       // если не влезает — обрезаем
                     .padding(.horizontal)
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
@@ -113,13 +117,15 @@ struct GameView: View {
     }
 }
 
-private func fontSize(for length: Int) -> CGFloat {
+private func fontSize(for displayedWord: String) -> CGFloat {
+    let length = displayedWord.filter { $0 != "\u{2007}" && $0 != "_" }.count
+
     switch length {
     case 0...5: return 40
     case 6...8: return 32
-    case 9...12: return 24
-    case 13...16: return 18
-    case 17...20: return 16
+    case 9...12: return 28
+    case 13...16: return 22
+    case 17...20: return 18
     default: return 16
     }
 }
