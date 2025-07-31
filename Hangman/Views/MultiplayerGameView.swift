@@ -5,11 +5,29 @@ struct MultiplayerGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @StateObject private var viewModel = MultiplayerGameViewModel()
     @Environment(\.dismiss) private var dismiss
+    @State private var showCopiedAlert = false
 
     var body: some View {
         VStack(spacing: 20) {
             Text(viewModel.statusText)
                 .font(.title2)
+            
+            if let gameId = viewModel.createdGameId {
+                HStack {
+                    Text("Game ID: \(gameId)")
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    
+                    Button(action: {
+                        UIPasteboard.general.string = gameId
+                        showCopiedAlert = true
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
             
             Image(String(8 - viewModel.attemptsLeft))
                 .resizable()
@@ -54,6 +72,9 @@ struct MultiplayerGameView: View {
                 dismiss()
             }
         }
+        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
+            Button("OK", role: .cancel) { }
+        }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
@@ -68,7 +89,11 @@ struct MultiplayerGameView: View {
     }
 }
 
+import Foundation
+import SwiftUI
+
 final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate {
+    
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -77,10 +102,11 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var gameOverMessage = ""
     @Published var opponentLeftAlert = false
     @Published var shouldExitGame = false
-
+    @Published var createdGameId: String? = nil
+    
+    static var manualJoinGameId: String? = nil
 
     @AppStorage("gameLanguage") private var selectedLanguage = ""
-
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
 
@@ -125,6 +151,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOver = false
         gameOverMessage = ""
         currentGameId = nil
+        createdGameId = nil
         opponentLeftAlert = false
         shouldExitGame = false
     }
@@ -133,6 +160,10 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     func didReceiveWaiting() {
         statusText = "Ожидание соперника..."
+    }
+    
+    func didReceiveWaitingFriend() {
+        statusText = "Ожидаем друга..."
     }
 
     func didFindMatch(wordLength: Int) {
@@ -148,7 +179,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
-        statusText = !duplicate ? statusText : "Ход принят"
+        statusText = duplicate ? statusText : "Ход принят"
     }
     
     func didReceiveGameOver(win: Bool, word: String) {
@@ -167,5 +198,10 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     func didReceiveError(_ message: String) {
         statusText = "Ошибка: \(message)"
+    }
+    
+    func didCreateRoom(gameId: String) {
+        self.createdGameId = gameId
+        self.statusText = "Комната создана. Отправьте ID другу."
     }
 }

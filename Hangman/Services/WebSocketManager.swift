@@ -48,9 +48,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
 
     // MARK: URLSessionWebSocketDelegate
-
+    
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         isConnected = true
+        print("✅ WebSocket подключен")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             self.sendFindOrCreate()
         }
@@ -63,14 +64,18 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     // MARK: Sending messages
 
     private func sendFindOrCreate() {
-        guard isConnected else { return }
+        guard isConnected else {
+            print("⚠️ Не подключено, пропускаем FIND/CREATE")
+            return
+        }
         var msgDict: [String: Any]
         switch mode {
         case .duel:
             msgDict = ["type": "FIND_GAME", "lang": lang.lowercased()]
         case .friends:
-            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "word": "APPLE"]
+            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased()]
         }
+        print("📤 Отправляем:", msgDict)
         send(json: msgDict)
     }
 
@@ -149,6 +154,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate)
                 }
                 
+            case "ROOM_CREATED":
+                if let gameId = json["gameId"] as? String {
+                    print("✅ Игра создана, gameId:", gameId)
+                    self.currentGameId = gameId
+                    self.delegate?.didCreateRoom(gameId: gameId)   // ✅
+                    self.delegate?.didReceiveWaitingFriend()
+                }
+
             case "PLAYER_LEFT":
                 DispatchQueue.main.async {
                     self.delegate?.didReceivePlayerLeft(playerId: json["playerId"] as? String ?? "")

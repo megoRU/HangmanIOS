@@ -6,10 +6,12 @@
 //
 
 protocol WebSocketManagerDelegate: AnyObject {
-    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool)
-    func didReceiveGameOver(win: Bool, word: String)
     func didReceiveWaiting()
     func didFindMatch(wordLength: Int)
-    func didReceiveError(_ message: String)
+    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool)
+    func didReceiveGameOver(win: Bool, word: String)
     func didReceivePlayerLeft(playerId: String)
+    func didReceiveError(_ message: String)
+    func didReceiveWaitingFriend()
+    func didCreateRoom(gameId: String)   // ✅ Новый метод
 }
