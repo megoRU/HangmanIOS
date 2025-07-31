@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GameView: View {
-    @AppStorage("gameLanguage") private var selectedLanguage = "EN"
+    @AppStorage("gameLanguage") private var selectedLanguage = ""
     @AppStorage("gameCategory") private var selectedCategory = ""
     
     @State private var wordToGuess: String = ""

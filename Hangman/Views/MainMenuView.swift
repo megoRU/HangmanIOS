@@ -41,6 +41,17 @@ struct MainMenuView: View {
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
+                
+                NavigationLink(destination: MultiplayerMenuView()) {
+                    Text("👥 Мультиплеер")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                }
 
                 NavigationLink(destination: SettingsView()) {
                     Text("⚙️ Настройки")
