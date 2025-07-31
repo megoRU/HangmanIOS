@@ -148,6 +148,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let duplicate = json["duplicate"] as? Bool ?? false
                     self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate)
                 }
+                
+            case "PLAYER_LEFT":
+                DispatchQueue.main.async {
+                    self.delegate?.didReceivePlayerLeft(playerId: json["playerId"] as? String ?? "")
+                }
 
             case "GAME_OVER":
                 if let result = json["result"] as? String,

@@ -11,4 +11,5 @@ protocol WebSocketManagerDelegate: AnyObject {
     func didReceiveWaiting()
     func didFindMatch(wordLength: Int)
     func didReceiveError(_ message: String)
+    func didReceivePlayerLeft(playerId: String)
 }

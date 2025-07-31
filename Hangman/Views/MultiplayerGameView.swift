@@ -4,20 +4,22 @@ struct MultiplayerGameView: View {
     let mode: MultiplayerMode
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @StateObject private var viewModel = MultiplayerGameViewModel()
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 20) {
             Text(viewModel.statusText)
                 .font(.title2)
-
+            
+            Image(String(8 - viewModel.attemptsLeft))
+                .resizable()
+                .scaledToFit()
+            
             Text(viewModel.maskedWord)
                 .font(.system(size: 36, weight: .bold, design: .monospaced))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .padding()
-
-            Text("Попыток осталось: \(viewModel.attemptsLeft)")
-                .font(.title3)
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
                 ForEach(viewModel.alphabet, id: \.self) { letter in
@@ -41,9 +43,16 @@ struct MultiplayerGameView: View {
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
             Button("OK") {
                 viewModel.resetGame()
+                dismiss()
             }
         } message: {
             Text(viewModel.gameOverMessage)
+        }
+        .alert("Противник вышел из игры", isPresented: $viewModel.opponentLeftAlert) {
+            Button("OK") {
+                viewModel.resetGame()
+                dismiss()
+            }
         }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
@@ -51,9 +60,9 @@ struct MultiplayerGameView: View {
         }
         .onDisappear {
             print("🔌 onDisappear вызван")
-            viewModel.leaveGame()       // сначала уходим из игры
+            viewModel.leaveGame()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.disconnect()  // разрываем соединение чуть позже
+                viewModel.disconnect()
             }
         }
     }
@@ -66,11 +75,15 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var statusText = "Подключение..."
     @Published var gameOver = false
     @Published var gameOverMessage = ""
+    @Published var opponentLeftAlert = false
+    @Published var shouldExitGame = false
+
+
     @AppStorage("gameLanguage") private var selectedLanguage = ""
 
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
-    
+
     public var alphabet: [Character] {
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
@@ -81,7 +94,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         webSocketManager.delegate = self
         webSocketManager.connect(mode: mode, language: language)
     }
-    
+
     func leaveGame() {
         print("🔌 leaveGame вызван")
         webSocketManager.leaveGame(gameId: currentGameId)
@@ -112,6 +125,8 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOver = false
         gameOverMessage = ""
         currentGameId = nil
+        opponentLeftAlert = false
+        shouldExitGame = false
     }
 
     // MARK: WebSocketManagerDelegate
@@ -126,20 +141,28 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         attemptsLeft = 8
         guessedLetters.removeAll()
         gameOver = false
-        // ⬇️ Просто сохраняем ID
-        self.currentGameId = webSocketManager.currentGameId
+        opponentLeftAlert = false
+        currentGameId = webSocketManager.currentGameId
     }
 
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
-        statusText = duplicate ? "Буква уже была" : "Ход принят"
+        statusText = !duplicate ? statusText : "Ход принят"
     }
-
+    
     func didReceiveGameOver(win: Bool, word: String) {
         gameOver = true
         gameOverMessage = win ? "Вы выиграли! Слово: \(word)" : "Вы проиграли! Слово: \(word)"
         statusText = "Игра окончена"
+        shouldExitGame = true
+    }
+
+    func didReceivePlayerLeft(playerId: String) {
+        opponentLeftAlert = true
+        statusText = "Противник вышел из игры"
+        gameOver = true
+        shouldExitGame = true
     }
 
     func didReceiveError(_ message: String) {
