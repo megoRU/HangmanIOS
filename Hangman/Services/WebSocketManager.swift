@@ -36,6 +36,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         isConnected = false
     }
 
+    /// Отправить на сервер команду выхода из игры
+    func leaveGame(gameId: String?) {
+        guard isConnected else { return }
+        var msg: [String: Any] = ["type": "LEAVE_GAME"]
+        if let gameId = gameId {
+            msg["gameId"] = gameId
+        }
+        print("🔌 Отправка LEAVE_GAME: \(msg)")
+        send(json: msg)
+    }
+
     // MARK: URLSessionWebSocketDelegate
 
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {

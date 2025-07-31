@@ -46,10 +46,15 @@ struct MultiplayerGameView: View {
             Text(viewModel.gameOverMessage)
         }
         .onAppear {
+            print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
         }
         .onDisappear {
-            viewModel.disconnect()
+            print("🔌 onDisappear вызван")
+            viewModel.leaveGame()       // сначала уходим из игры
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.disconnect()  // разрываем соединение чуть позже
+            }
         }
     }
 }
@@ -75,6 +80,11 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     func connect(mode: MultiplayerMode, language: String) {
         webSocketManager.delegate = self
         webSocketManager.connect(mode: mode, language: language)
+    }
+    
+    func leaveGame() {
+        print("🔌 leaveGame вызван")
+        webSocketManager.leaveGame(gameId: currentGameId)
     }
 
     func disconnect() {
