@@ -191,7 +191,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         wordLength: wordLength,
                         players: players,
                         gameId: gameId,
-                        guesses: guesses
+                        guesses: Set(guesses)
                     )
                 }
 
