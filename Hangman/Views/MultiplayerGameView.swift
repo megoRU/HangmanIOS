@@ -9,9 +9,10 @@ struct MultiplayerGameView: View {
     @State private var manualJoinId = ""
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text(viewModel.statusText)
-                .font(.title2)
+        ScrollView {
+            VStack(spacing: 20) {
+                Text(viewModel.statusText)
+                    .font(.title2)
             
             if let gameId = viewModel.createdGameId {
                 HStack {
@@ -119,7 +120,7 @@ struct MultiplayerGameView: View {
                 viewModel.disconnect()
             }
         }
-        .ignoresSafeArea(.keyboard)
+    }
     }
 }
 
