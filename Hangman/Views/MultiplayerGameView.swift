@@ -9,75 +9,13 @@ struct MultiplayerGameView: View {
     @State private var manualJoinId = ""
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text(viewModel.statusText)
-                .font(.title2)
-            
-            if let gameId = viewModel.createdGameId {
-                HStack {
-                    Text("Game ID: \(gameId)")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    
-                    Button(action: {
-                        UIPasteboard.general.string = gameId
-                        showCopiedAlert = true
-                    }) {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
-                    }
-                }
+        Group {
+            if viewModel.currentGameId == nil && mode == .code_friend {
+                connectionView
+            } else {
+                gameContentView
             }
-            
-            // Поле для ввода ID только для подключения к существующей игре
-            if mode == .code_friend && viewModel.currentGameId == nil {
-                VStack(spacing: 12) {
-                    TextField("Введите Game ID", text: $manualJoinId)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
-                    Button("Подключиться") {
-                        viewModel.joinMulti(gameId: manualJoinId)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    .padding(.horizontal)
-                }
-                .ignoresSafeArea(.keyboard)
-            }
-            
-            Image(String(8 - viewModel.attemptsLeft))
-                .resizable()
-                .scaledToFit()
-            
-            Text(viewModel.maskedWord)
-                .font(.system(size: 36, weight: .bold, design: .monospaced))
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding()
-            
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                ForEach(viewModel.alphabet, id: \.self) { letter in
-                    Button(action: {
-                        viewModel.chooseLetter(letter)
-                    }) {
-                        Text(String(letter))
-                            .frame(width: 40, height: 40)
-                            .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
-                    }
-                    .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
-                }
-            }
-            
-            Spacer()
         }
-        .padding()
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -120,6 +58,83 @@ struct MultiplayerGameView: View {
                 viewModel.disconnect()
             }
         }
+    }
+
+    private var connectionView: some View {
+        VStack(spacing: 20) {
+            Text("Ожидание ввода кода...")
+                .font(.title2)
+
+            VStack(spacing: 12) {
+                TextField("Введите Game ID", text: $manualJoinId)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                Button("Подключиться") {
+                    viewModel.joinMulti(gameId: manualJoinId)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .padding(.horizontal)
+            }
+            Spacer()
+        }
+        .padding()
+    }
+
+    private var gameContentView: some View {
+        VStack(spacing: 20) {
+            Text(viewModel.statusText)
+                .font(.title2)
+            
+            if let gameId = viewModel.createdGameId {
+                HStack {
+                    Text("Game ID: \(gameId)")
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    
+                    Button(action: {
+                        UIPasteboard.general.string = gameId
+                        showCopiedAlert = true
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            
+            Image(String(8 - viewModel.attemptsLeft))
+                .resizable()
+                .scaledToFit()
+            
+            Text(viewModel.maskedWord)
+                .font(.system(size: 36, weight: .bold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding()
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                ForEach(viewModel.alphabet, id: \.self) { letter in
+                    Button(action: {
+                        viewModel.chooseLetter(letter)
+                    }) {
+                        Text(String(letter))
+                            .frame(width: 40, height: 40)
+                            .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
+                }
+            }
+            
+            Spacer()
+        }
+        .padding()
     }
 }
 
