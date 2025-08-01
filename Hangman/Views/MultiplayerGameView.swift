@@ -22,7 +22,7 @@ struct MultiplayerGameView: View {
                 VStack {
                     Text("Мультиплелер")
                         .font(.headline)
-                    if viewModel.playerCount > 0 {
+                    if viewModel.playerCount > 0 && mode == .code_friend {
                         Text("Игроков: \(viewModel.playerCount)")
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -66,7 +66,7 @@ struct MultiplayerGameView: View {
                 .font(.title2)
 
             VStack(spacing: 12) {
-                TextField("Введите Game ID", text: $manualJoinId)
+                TextField("Введите ID игры", text: $manualJoinId)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
 
@@ -89,6 +89,7 @@ struct MultiplayerGameView: View {
         VStack(spacing: 20) {
             Text(viewModel.statusText)
                 .font(.title2)
+                .multilineTextAlignment(.center)
             
             if let gameId = viewModel.createdGameId {
                 HStack {
@@ -166,7 +167,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func connect(mode: MultiplayerMode, language: String) {
         if mode == .code_friend {
-            statusText = "Ожидание ввода кода..."
+            statusText = "Ожидание кода..."
         } else {
             statusText = "Подключение..."
         }
@@ -225,7 +226,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didFindMatch(wordLength: Int) {
-        statusText = "Игра началась! Слово длиной \(wordLength) букв"
+        statusText = "Игра началась!\nСлово длиной \(wordLength) букв"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
         guessedLetters.removeAll()
@@ -248,7 +249,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func didReceiveGameOver(win: Bool, word: String) {
         gameOver = true
-        gameOverMessage = win ? "Вы выиграли! Слово: \(word)" : "Вы проиграли! Слово: \(word)"
+        gameOverMessage = win ? "Вы выиграли!\nСлово: \(word)" : "Вы проиграли!\nСлово: \(word)"
         statusText = "Игра окончена"
         shouldExitGame = true
     }
