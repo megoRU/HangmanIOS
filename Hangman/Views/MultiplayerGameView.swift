@@ -9,10 +9,9 @@ struct MultiplayerGameView: View {
     @State private var manualJoinId = ""
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Text(viewModel.statusText)
-                    .font(.title2)
+        VStack(spacing: 20) {
+            Text(viewModel.statusText)
+                .font(.title2)
             
             if let gameId = viewModel.createdGameId {
                 HStack {
@@ -48,6 +47,7 @@ struct MultiplayerGameView: View {
                     .cornerRadius(8)
                     .padding(.horizontal)
                 }
+                .ignoresSafeArea(.keyboard)
             }
             
             Image(String(8 - viewModel.attemptsLeft))
@@ -120,7 +120,6 @@ struct MultiplayerGameView: View {
                 viewModel.disconnect()
             }
         }
-    }
     }
 }
 
