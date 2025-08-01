@@ -167,7 +167,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                    let attemptsLeft = json["attemptsLeft"] as? Int {
                     print("✅ STATE_UPDATE, maskedWord:", maskedWord)
                     let duplicate = json["duplicate"] as? Bool ?? false
-                    self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate)
+                    var guessedSet: Set<String>? = nil
+                    if let guessed = json["guessed"] as? [String] {
+                        guessedSet = Set(guessed)
+                    }
+                    self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate, guessed: guessedSet)
                 }
                 
             case "ROOM_CREATED":

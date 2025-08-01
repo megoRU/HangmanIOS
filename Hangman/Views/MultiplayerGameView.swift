@@ -235,9 +235,12 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         playerCount = 2
     }
     
-    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
+    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
+        if let guessed = guessed {
+            self.guessedLetters = Set(guessed.map { Character($0) })
+        }
         if !duplicate {
             // Cтатус не меняем, чтобы не было "Ход принят"
         }

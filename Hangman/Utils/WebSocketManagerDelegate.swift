@@ -8,7 +8,7 @@
 protocol WebSocketManagerDelegate: AnyObject {
     func didReceiveWaiting()
     func didFindMatch(wordLength: Int)
-    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool)
+    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?)
     func didReceiveGameOver(win: Bool, word: String)
     func didReceivePlayerLeft(playerId: String)
     func didReceiveError(_ message: String)
