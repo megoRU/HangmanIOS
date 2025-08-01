@@ -6,7 +6,8 @@ struct MultiplayerGameView: View {
     @StateObject private var viewModel = MultiplayerGameViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showCopiedAlert = false
-
+    @State private var manualJoinId = ""
+    
     var body: some View {
         VStack(spacing: 20) {
             Text(viewModel.statusText)
@@ -29,6 +30,25 @@ struct MultiplayerGameView: View {
                 }
             }
             
+            // Поле для ввода ID только для подключения к существующей игре
+            if mode == .code_friend && viewModel.currentGameId == nil {
+                VStack(spacing: 12) {
+                    TextField("Введите Game ID", text: $manualJoinId)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal)
+                    
+                    Button("Подключиться") {
+                        viewModel.joinMulti(gameId: manualJoinId)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                    .padding(.horizontal)
+                }
+            }
+            
             Image(String(8 - viewModel.attemptsLeft))
                 .resizable()
                 .scaledToFit()
@@ -38,7 +58,7 @@ struct MultiplayerGameView: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .padding()
-
+            
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
                 ForEach(viewModel.alphabet, id: \.self) { letter in
                     Button(action: {
@@ -53,7 +73,7 @@ struct MultiplayerGameView: View {
                     .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
                 }
             }
-
+            
             Spacer()
         }
         .padding()
@@ -104,28 +124,36 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
     
-    static var manualJoinGameId: String? = nil
-
     @AppStorage("gameLanguage") private var selectedLanguage = ""
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
-
+    
     public var alphabet: [Character] {
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
         : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     }
-
+    
     func connect(mode: MultiplayerMode, language: String) {
+        if mode == .code_friend {
+            statusText = "Ожидание ввода кода..."
+        } else {
+            statusText = "Подключение..."
+        }
+        
         webSocketManager.delegate = self
         webSocketManager.connect(mode: mode, language: language)
     }
-
+    
+    func joinMulti(gameId: String) {
+        webSocketManager.joinMulti(gameId: gameId)
+    }
+    
     func leaveGame() {
         print("🔌 leaveGame вызван")
         webSocketManager.leaveGame(gameId: currentGameId)
     }
-
+    
     func disconnect() {
         if let gameId = currentGameId {
             let msg: [String: Any] = [
@@ -136,13 +164,13 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         }
         webSocketManager.disconnect()
     }
-
+    
     func chooseLetter(_ letter: Character) {
         guard !gameOver, !guessedLetters.contains(letter), let gameId = currentGameId else { return }
         guessedLetters.insert(letter)
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
-
+    
     func resetGame() {
         maskedWord = ""
         attemptsLeft = 8
@@ -155,9 +183,9 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         opponentLeftAlert = false
         shouldExitGame = false
     }
-
+    
     // MARK: WebSocketManagerDelegate
-
+    
     func didReceiveWaiting() {
         statusText = "Ожидание соперника..."
     }
@@ -165,7 +193,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     func didReceiveWaitingFriend() {
         statusText = "Ожидаем друга..."
     }
-
+    
     func didFindMatch(wordLength: Int) {
         statusText = "Игра началась! Слово длиной \(wordLength) букв"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
@@ -175,7 +203,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         opponentLeftAlert = false
         currentGameId = webSocketManager.currentGameId
     }
-
+    
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
@@ -188,14 +216,14 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         statusText = "Игра окончена"
         shouldExitGame = true
     }
-
+    
     func didReceivePlayerLeft(playerId: String) {
         opponentLeftAlert = true
         statusText = "Противник вышел из игры"
         gameOver = true
         shouldExitGame = true
     }
-
+    
     func didReceiveError(_ message: String) {
         statusText = "Ошибка: \(message)"
     }
@@ -203,5 +231,14 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     func didCreateRoom(gameId: String) {
         self.createdGameId = gameId
         self.statusText = "Комната создана. Отправьте ID другу."
+    }
+    
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int) {
+        self.statusText = "Игроков в комнате: \(players)"
+        maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
+        self.attemptsLeft = attemptsLeft
+        guessedLetters.removeAll()
+        gameOver = false
+        opponentLeftAlert = false
     }
 }

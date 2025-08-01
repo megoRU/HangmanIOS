@@ -34,9 +34,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            Button(action: {
-                showJoinAlert = true
-            }) {
+            NavigationLink(destination: MultiplayerGameView(mode: .code_friend)) {
                 Text("🔗 Подключиться к игре")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -46,16 +44,7 @@ struct MultiplayerMenuView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
             }
-            .alert("Введите Game ID", isPresented: $showJoinAlert) {
-                TextField("Game ID", text: $joinGameId)
-                Button("Подключиться") {
-                    if !joinGameId.isEmpty {
-                        // Переход сразу в игру, передаем gameId
-                        MultiplayerGameViewModel.manualJoinGameId = joinGameId
-                    }
-                }
-                Button("Отмена", role: .cancel) {}
-            }
+
 
             Spacer()
         }

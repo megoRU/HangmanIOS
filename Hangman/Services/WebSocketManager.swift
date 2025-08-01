@@ -35,6 +35,16 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         isConnected = false
     }
+    
+    func joinMulti(gameId: String) {
+        guard isConnected else { return }
+        let msg: [String: Any] = [
+            "type": "JOIN_MULTI",
+            "gameId": gameId
+        ]
+        print("📤 Отправляем JOIN_MULTI:", msg)
+        send(json: msg)
+    }
 
     /// Отправить на сервер команду выхода из игры
     func leaveGame(gameId: String?) {
@@ -74,6 +84,9 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             msgDict = ["type": "FIND_GAME", "lang": lang.lowercased()]
         case .friends:
             msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased()]
+        case .code_friend:
+            print("🟢 Режим code_friend — ждём ручного ввода Game ID")
+            return
         }
         print("📤 Отправляем:", msgDict)
         send(json: msgDict)
@@ -138,11 +151,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         DispatchQueue.main.async {
             switch type {
             case "WAITING":
+                print("✅ WAITING")
                 self.delegate?.didReceiveWaiting()
 
             case "MATCH_FOUND":
                 if let gameId = json["gameId"] as? String,
                    let wordLength = json["wordLength"] as? Int {
+                    print("✅ MATCH_FOUND, wordLength:", wordLength)
                     self.currentGameId = gameId
                     self.delegate?.didFindMatch(wordLength: wordLength)
                 }
@@ -150,6 +165,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             case "STATE_UPDATE":
                 if let maskedWord = json["maskedWord"] as? String,
                    let attemptsLeft = json["attemptsLeft"] as? Int {
+                    print("✅ STATE_UPDATE, maskedWord:", maskedWord)
                     let duplicate = json["duplicate"] as? Bool ?? false
                     self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate)
                 }
@@ -158,9 +174,23 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 if let gameId = json["gameId"] as? String {
                     print("✅ Игра создана, gameId:", gameId)
                     self.currentGameId = gameId
-                    self.delegate?.didCreateRoom(gameId: gameId)   // ✅
+                    self.delegate?.didCreateRoom(gameId: gameId)
                     self.delegate?.didReceiveWaitingFriend()
                 }
+                
+            case "PLAYER_JOINED":
+                if let attemptsLeft = json["attemptsLeft"] as? Int,
+                   let wordLength = json["wordLength"] as? Int,
+                   let players = json["players"] as? Int {
+                    print("✅ PLAYER_JOINED, players:", players)
+                    // currentGameId не берём из json, а берём из self.currentGameId
+                    self.delegate?.didReceivePlayerJoined(
+                        attemptsLeft: attemptsLeft,
+                        wordLength: wordLength,
+                        players: players
+                    )
+                }
+
 
             case "PLAYER_LEFT":
                 DispatchQueue.main.async {
@@ -170,6 +200,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             case "GAME_OVER":
                 if let result = json["result"] as? String,
                    let word = json["word"] as? String {
+                    print("✅ Игра завершилась, result:", result)
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
                 }
 

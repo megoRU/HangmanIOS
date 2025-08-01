@@ -8,4 +8,5 @@
 enum MultiplayerMode {
     case duel
     case friends
+    case code_friend
 }
