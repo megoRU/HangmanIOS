@@ -183,7 +183,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                    let wordLength = json["wordLength"] as? Int,
                    let players = json["players"] as? Int,
                    let gameId = json["gameId"] as? String,
-                   let guesses = json["guesses"] as? [String] {
+                   let guessed = json["guessed"] as? [String] {
                     print("✅ PLAYER_JOINED, players:", players)
                     self.currentGameId = gameId
                     self.delegate?.didReceivePlayerJoined(
@@ -191,7 +191,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         wordLength: wordLength,
                         players: players,
                         gameId: gameId,
-                        guesses: Set(guesses)
+                        guesses: Set(guessed)
                     )
                 }
 
