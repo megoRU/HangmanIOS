@@ -201,7 +201,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 
             case "PLAYER_LEFT":
                 DispatchQueue.main.async {
-                    self.delegate?.didReceivePlayerLeft(playerId: json["playerId"] as? String ?? "")
+                    if let playerId = json["playerId"] as? String {
+                        print("✅ PLAYER_LEFT, playerId:", playerId)
+                        self.delegate?.didReceivePlayerLeft(playerId: playerId)
+                    }
                 }
                 
             case "GAME_OVER":
