@@ -119,6 +119,7 @@ struct MultiplayerGameView: View {
                 viewModel.disconnect()
             }
         }
+        .ignoresSafeArea(.keyboard)
     }
 }
 
