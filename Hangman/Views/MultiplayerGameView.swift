@@ -9,6 +9,83 @@ struct MultiplayerGameView: View {
     @State private var manualJoinId = ""
     
     var body: some View {
+        Group {
+            if viewModel.currentGameId == nil && mode == .code_friend {
+                connectionView
+            } else {
+                gameContentView
+            }
+        }
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack {
+                    Text("Мультиплелер")
+                        .font(.headline)
+                    if viewModel.playerCount > 0 {
+                        Text("Игроков: \(viewModel.playerCount)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+        .alert("Игра окончена", isPresented: $viewModel.gameOver) {
+            Button("OK") {
+                viewModel.resetGame()
+                dismiss()
+            }
+        } message: {
+            Text(viewModel.gameOverMessage)
+        }
+        .alert("Противник вышел из игры", isPresented: $viewModel.opponentLeftAlert) {
+            Button("OK") {
+                viewModel.resetGame()
+                dismiss()
+            }
+        }
+        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
+            Button("OK", role: .cancel) { }
+        }
+        .onAppear {
+            print("🔌 onConnect:", selectedLanguage)
+            viewModel.connect(mode: mode, language: selectedLanguage)
+        }
+        .onDisappear {
+            print("🔌 onDisappear вызван")
+            viewModel.leaveGame()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.disconnect()
+            }
+        }
+    }
+
+    private var connectionView: some View {
+        VStack(spacing: 20) {
+            Text("Ожидание ввода кода...")
+                .font(.title2)
+
+            VStack(spacing: 12) {
+                TextField("Введите Game ID", text: $manualJoinId)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                Button("Подключиться") {
+                    viewModel.joinMulti(gameId: manualJoinId)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+                .padding(.horizontal)
+            }
+            Spacer()
+        }
+        .padding()
+    }
+
+    private var gameContentView: some View {
         VStack(spacing: 20) {
             Text(viewModel.statusText)
                 .font(.title2)
@@ -27,25 +104,6 @@ struct MultiplayerGameView: View {
                         Image(systemName: "doc.on.doc")
                             .foregroundColor(.blue)
                     }
-                }
-            }
-            
-            // Поле для ввода ID только для подключения к существующей игре
-            if mode == .code_friend && viewModel.currentGameId == nil {
-                VStack(spacing: 12) {
-                    TextField("Введите Game ID", text: $manualJoinId)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .padding(.horizontal)
-                    
-                    Button("Подключиться") {
-                        viewModel.joinMulti(gameId: manualJoinId)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.green)
-                    .foregroundColor(.white)
-                    .cornerRadius(8)
-                    .padding(.horizontal)
                 }
             }
             
@@ -77,35 +135,6 @@ struct MultiplayerGameView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Мультиплеер")
-        .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-            Button("OK") {
-                viewModel.resetGame()
-                dismiss()
-            }
-        } message: {
-            Text(viewModel.gameOverMessage)
-        }
-        .alert("Противник вышел из игры", isPresented: $viewModel.opponentLeftAlert) {
-            Button("OK") {
-                viewModel.resetGame()
-                dismiss()
-            }
-        }
-        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
-            Button("OK", role: .cancel) { }
-        }
-        .onAppear {
-            print("🔌 onConnect:", selectedLanguage)
-            viewModel.connect(mode: mode, language: selectedLanguage)
-        }
-        .onDisappear {
-            print("🔌 onDisappear вызван")
-            viewModel.leaveGame()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.disconnect()
-            }
-        }
     }
 }
 
@@ -123,6 +152,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var opponentLeftAlert = false
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
+    @Published var playerCount = 0
     
     @AppStorage("gameLanguage") private var selectedLanguage = ""
     private var webSocketManager = WebSocketManager()
@@ -202,12 +232,15 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOver = false
         opponentLeftAlert = false
         currentGameId = webSocketManager.currentGameId
+        playerCount = 2
     }
     
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
-        statusText = duplicate ? statusText : "Ход принят"
+        if !duplicate {
+            // Cтатус не меняем, чтобы не было "Ход принят"
+        }
     }
     
     func didReceiveGameOver(win: Bool, word: String) {
@@ -233,12 +266,14 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.statusText = "Комната создана. Отправьте ID другу."
     }
     
-    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int) {
-        self.statusText = "Игроков в комнате: \(players)"
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>) {
+        self.currentGameId = gameId
+        self.statusText = "Игра началась"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         self.attemptsLeft = attemptsLeft
-        guessedLetters.removeAll()
+        guessedLetters = Set(guessed.map { Character($0) })
         gameOver = false
         opponentLeftAlert = false
+        playerCount = players
     }
 }

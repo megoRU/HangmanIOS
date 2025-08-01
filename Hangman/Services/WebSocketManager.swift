@@ -181,13 +181,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             case "PLAYER_JOINED":
                 if let attemptsLeft = json["attemptsLeft"] as? Int,
                    let wordLength = json["wordLength"] as? Int,
-                   let players = json["players"] as? Int {
+                   let players = json["players"] as? Int,
+                   let gameId = json["gameId"] as? String,
+                   let guessed = json["guessed"] as? [String] {
                     print("✅ PLAYER_JOINED, players:", players)
-                    // currentGameId не берём из json, а берём из self.currentGameId
+                    self.currentGameId = gameId
                     self.delegate?.didReceivePlayerJoined(
                         attemptsLeft: attemptsLeft,
                         wordLength: wordLength,
-                        players: players
+                        players: players,
+                        gameId: gameId,
+                        guessed: Set(guessed)
                     )
                 }
 
