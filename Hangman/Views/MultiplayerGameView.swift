@@ -63,16 +63,22 @@ struct MultiplayerGameView: View {
                 TextField("Введите ID игры", text: $manualJoinId)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding(.horizontal)
-
-                Button("Подключиться") {
+                    .padding(.bottom, 15)
+                
+                Button {
                     viewModel.joinMulti(gameId: manualJoinId)
+                } label: {
+                    Text("Подключиться")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(manualJoinId.isEmpty ? Color.gray : Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
                 }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.green)
-                .foregroundColor(.white)
-                .cornerRadius(8)
+                .disabled(manualJoinId.isEmpty)
                 .padding(.horizontal)
+
             }
             Spacer()
         }
@@ -133,6 +139,10 @@ struct MultiplayerGameView: View {
     }
 }
 
+#Preview {
+    MainMenuView()
+}
+
 import Foundation
 import SwiftUI
 
@@ -160,38 +170,31 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     }
     
+    // MARK: - Подключение
     func connect(mode: MultiplayerMode, language: String) {
         self.mode = mode
-        if mode == .code_friend {
-            statusText = "Ожидание кода..."
-        } else {
-            statusText = "Подключение..."
-        }
-        
+        statusText = mode == .code_friend ? "Ожидание кода..." : "Подключение..."
         webSocketManager.delegate = self
         webSocketManager.connect(mode: mode, language: language)
     }
     
     func joinMulti(gameId: String) {
+        currentGameId = gameId
         webSocketManager.joinMulti(gameId: gameId)
     }
     
+    // MARK: - Выход и разрыв
     func leaveGame() {
         print("🔌 leaveGame вызван")
         webSocketManager.leaveGame(gameId: currentGameId)
     }
     
     func disconnect() {
-        if let gameId = currentGameId {
-            let msg: [String: Any] = [
-                "type": "LEAVE_GAME",
-                "gameId": gameId
-            ]
-            webSocketManager.send(json: msg)
-        }
+        leaveGame()
         webSocketManager.disconnect()
     }
     
+    // MARK: - Ходы
     func chooseLetter(_ letter: Character) {
         guard !gameOver, !guessedLetters.contains(letter), let gameId = currentGameId else { return }
         guessedLetters.insert(letter)
@@ -211,7 +214,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         shouldExitGame = false
     }
     
-    // MARK: WebSocketManagerDelegate
+    // MARK: - WebSocketManagerDelegate
     
     func didReceiveWaiting() {
         statusText = "Ожидание соперника..."
@@ -238,9 +241,6 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         if let guessed = guessed {
             self.guessedLetters = Set(guessed.map { Character($0) })
         }
-        if !duplicate {
-            // Cтатус не меняем, чтобы не было "Ход принят"
-        }
     }
     
     func didReceiveGameOver(win: Bool, word: String) {
@@ -251,13 +251,13 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceivePlayerLeft(playerId: String) {
+        gameOver = true
         if mode == .code_friend {
-            gameOver = true
             gameOverMessage = "Друг вышел из игры"
-            shouldExitGame = true
         } else {
-            statusText = "Противник вышел. Вы можете продолжать игру."
+            gameOverMessage = "Противник вышел. Победа за вами!"
         }
+        shouldExitGame = true
     }
     
     func didReceiveError(_ message: String) {

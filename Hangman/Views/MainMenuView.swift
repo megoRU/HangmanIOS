@@ -17,11 +17,11 @@ struct MainMenuView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 40) {
+            VStack(spacing: 30) {
                 Text("Hangman")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .padding(.top, 60)
+                    .padding(.top, 40)
                 
                 // Анимация смены изображений
                 Image(String(attemptsLeft))
@@ -32,7 +32,7 @@ struct MainMenuView: View {
                     }
 
                 NavigationLink(destination: GameView()) {
-                    Text("🎮 Начать игру")
+                    Text("🎮 Одиночная")
                         .font(.title2)
                         .frame(maxWidth: .infinity)
                         .padding()

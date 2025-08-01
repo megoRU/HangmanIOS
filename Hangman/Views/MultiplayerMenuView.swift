@@ -11,6 +11,10 @@ struct MultiplayerMenuView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .padding(.top, 40)
+            
+            Image(String(7))
+                .resizable()
+                .scaledToFit()
 
             NavigationLink(destination: MultiplayerGameView(mode: .duel)) {
                 Text("⚔️ Играть 1 vs 1")
@@ -24,7 +28,7 @@ struct MultiplayerMenuView: View {
             }
 
             NavigationLink(destination: MultiplayerGameView(mode: .friends)) {
-                Text("👥 Создать игру с другом")
+                Text("🎮 Создать игру")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -52,3 +56,6 @@ struct MultiplayerMenuView: View {
     }
 }
 
+#Preview {
+    MainMenuView()
+}
