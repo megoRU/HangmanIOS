@@ -233,7 +233,8 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.statusText = "Комната создана. Отправьте ID другу."
     }
     
-    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int) {
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String) {
+        self.currentGameId = gameId
         self.statusText = "Игроков в комнате: \(players)"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         self.attemptsLeft = attemptsLeft
