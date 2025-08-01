@@ -77,7 +77,20 @@ struct MultiplayerGameView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Мультиплеер")
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack {
+                    Text("Мультиплелер")
+                        .font(.headline)
+                    if viewModel.playerCount > 0 {
+                        Text("Игроков: \(viewModel.playerCount)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
             Button("OK") {
                 viewModel.resetGame()
@@ -123,6 +136,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var opponentLeftAlert = false
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
+    @Published var playerCount = 0
     
     @AppStorage("gameLanguage") private var selectedLanguage = ""
     private var webSocketManager = WebSocketManager()
@@ -202,12 +216,15 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOver = false
         opponentLeftAlert = false
         currentGameId = webSocketManager.currentGameId
+        playerCount = 2
     }
     
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool) {
         self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
         self.attemptsLeft = attemptsLeft
-        statusText = duplicate ? statusText : "Ход принят"
+        if !duplicate {
+            // Cтатус не меняем, чтобы не было "Ход принят"
+        }
     }
     
     func didReceiveGameOver(win: Bool, word: String) {
@@ -241,5 +258,6 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
         guessedLetters.removeAll()
         gameOver = false
         opponentLeftAlert = false
+        playerCount = players
     }
 }
