@@ -38,6 +38,12 @@ struct MultiplayerGameView: View {
         } message: {
             Text(viewModel.gameOverMessage)
         }
+        .alert("Друг вышел из игры", isPresented: $viewModel.opponentLeftAlert) {
+            Button("OK") {
+                viewModel.resetGame()
+                dismiss()
+            }
+        }
         .alert("ID скопирован!", isPresented: $showCopiedAlert) {
             Button("OK", role: .cancel) { }
         }
@@ -152,6 +158,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     @AppStorage("gameLanguage") private var selectedLanguage = ""
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
+    private var mode: MultiplayerMode = .duel
     
     public var alphabet: [Character] {
         selectedLanguage == "RU"
@@ -160,6 +167,7 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func connect(mode: MultiplayerMode, language: String) {
+        self.mode = mode
         if mode == .code_friend {
             statusText = "Ожидание кода..."
         } else {
@@ -249,7 +257,14 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceivePlayerLeft(playerId: String) {
-        statusText = "Противник вышел. Вы можете продолжать игру."
+        if mode == .code_friend {
+            statusText = "Друг вышел из игры"
+            gameOver = true
+            shouldExitGame = true
+            opponentLeftAlert = true
+        } else {
+            statusText = "Противник вышел. Вы можете продолжать игру."
+        }
     }
     
     func didReceiveError(_ message: String) {
