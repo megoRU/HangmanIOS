@@ -38,9 +38,6 @@ struct MultiplayerGameView: View {
         } message: {
             Text(viewModel.gameOverMessage)
         }
-        .alert("Противник вышел из игры", isPresented: $viewModel.opponentLeftAlert) {
-            Button("OK", role: .cancel) { }
-        }
         .alert("ID скопирован!", isPresented: $showCopiedAlert) {
             Button("OK", role: .cancel) { }
         }
@@ -252,7 +249,6 @@ final class MultiplayerGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceivePlayerLeft(playerId: String) {
-        opponentLeftAlert = true
         statusText = "Противник вышел. Вы можете продолжать игру."
     }
     
