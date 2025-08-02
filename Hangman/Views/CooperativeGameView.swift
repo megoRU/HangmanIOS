@@ -1,0 +1,279 @@
+import SwiftUI
+
+struct CooperativeGameView: View {
+    let mode: MultiplayerMode
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
+    @StateObject private var viewModel = CooperativeGameViewModel()
+    @Environment(\.dismiss) private var dismiss
+    @State private var showCopiedAlert = false
+    @State private var manualJoinId = ""
+    
+    var body: some View {
+        Group {
+            if viewModel.currentGameId == nil && mode == .code_friend {
+                connectionView
+            } else {
+                gameContentView
+            }
+        }
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack {
+                    Text("Мультиплелер")
+                        .font(.headline)
+                    if viewModel.playerCount > 0 && (mode == .code_friend || mode == .friends) {
+                        Text("Игроков: \(viewModel.playerCount)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+        }
+        .alert("Игра окончена", isPresented: $viewModel.gameOver) {
+            Button("OK") {
+                viewModel.resetGame()
+                dismiss()
+            }
+        } message: {
+            Text(viewModel.gameOverMessage)
+        }
+        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
+            Button("OK", role: .cancel) { }
+        }
+        .onAppear {
+            print("🔌 onConnect:", selectedLanguage)
+            viewModel.connect(mode: mode, language: selectedLanguage)
+        }
+        .onDisappear {
+            print("🔌 onDisappear вызван")
+            viewModel.leaveGame()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                viewModel.disconnect()
+            }
+        }
+    }
+
+    private var connectionView: some View {
+        VStack(spacing: 20) {
+            Text("Ожидание ввода кода...")
+                .font(.title2)
+
+            VStack(spacing: 12) {
+                TextField("Введите ID игры", text: $manualJoinId)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+                    .padding(.bottom, 15)
+                
+                Button {
+                    viewModel.joinMulti(gameId: manualJoinId)
+                } label: {
+                    Text("Подключиться")
+                        .font(.title2)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(manualJoinId.isEmpty ? Color.gray : Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .disabled(manualJoinId.isEmpty)
+                .padding(.horizontal)
+
+            }
+            Spacer()
+        }
+        .padding()
+    }
+
+    private var gameContentView: some View {
+        VStack(spacing: 20) {
+            Text(viewModel.statusText)
+                .font(.title2)
+                .multilineTextAlignment(.center)
+            
+            if let gameId = viewModel.createdGameId {
+                HStack {
+                    Text("Game ID: \(gameId)")
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    
+                    Button(action: {
+                        UIPasteboard.general.string = gameId
+                        showCopiedAlert = true
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            
+            Image(String(8 - viewModel.attemptsLeft))
+                .resizable()
+                .scaledToFit()
+            
+            Text(viewModel.maskedWord)
+                .font(.system(size: 36, weight: .bold, design: .monospaced))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .padding()
+            
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                ForEach(viewModel.alphabet, id: \.self) { letter in
+                    Button(action: {
+                        viewModel.chooseLetter(letter)
+                    }) {
+                        Text(String(letter))
+                            .frame(width: 40, height: 40)
+                            .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
+                }
+            }
+            
+            Spacer()
+        }
+        .padding()
+    }
+}
+
+#Preview {
+    MainMenuView()
+}
+
+import Foundation
+import SwiftUI
+
+final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
+    
+    @Published var maskedWord = ""
+    @Published var attemptsLeft = 8
+    @Published var guessedLetters = Set<Character>()
+    @Published var statusText = "Подключение..."
+    @Published var gameOver = false
+    @Published var gameOverMessage = ""
+    @Published var opponentLeftAlert = false
+    @Published var shouldExitGame = false
+    @Published var createdGameId: String? = nil
+    @Published var playerCount = 0
+    
+    @AppStorage("gameLanguage") private var selectedLanguage = ""
+    private var webSocketManager = WebSocketManager()
+    private(set) var currentGameId: String?
+    private var mode: MultiplayerMode = .friends
+    
+    public var alphabet: [Character] {
+        selectedLanguage == "RU"
+        ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
+        : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    }
+    
+    // MARK: - Подключение
+    func connect(mode: MultiplayerMode, language: String) {
+        self.mode = mode
+        statusText = mode == .code_friend ? "Ожидание кода..." : "Подключение..."
+        webSocketManager.delegate = self
+        webSocketManager.connect(mode: mode, language: language)
+    }
+    
+    func joinMulti(gameId: String) {
+        currentGameId = gameId
+        webSocketManager.joinMulti(gameId: gameId)
+    }
+    
+    // MARK: - Выход и разрыв
+    func leaveGame() {
+        print("🔌 leaveGame вызван")
+        webSocketManager.leaveGame(gameId: currentGameId)
+    }
+    
+    func disconnect() {
+        leaveGame()
+        webSocketManager.disconnect()
+    }
+    
+    // MARK: - Ходы
+    func chooseLetter(_ letter: Character) {
+        guard !gameOver, !guessedLetters.contains(letter), let gameId = currentGameId else { return }
+        guessedLetters.insert(letter)
+        webSocketManager.sendMove(letter: letter, gameId: gameId)
+    }
+    
+    func resetGame() {
+        maskedWord = ""
+        attemptsLeft = 8
+        guessedLetters.removeAll()
+        statusText = "Подключение..."
+        gameOver = false
+        gameOverMessage = ""
+        currentGameId = nil
+        createdGameId = nil
+        opponentLeftAlert = false
+        shouldExitGame = false
+    }
+    
+    // MARK: - WebSocketManagerDelegate
+    
+    func didReceiveWaiting() {
+        statusText = "Ожидание соперника..."
+    }
+    
+    func didReceiveWaitingFriend() {
+        statusText = "Ожидаем друга..."
+    }
+    
+    func didFindMatch(wordLength: Int) {
+        // This is for duel, but we can have a generic message
+        statusText = "Игра началась!\nСлово длиной \(wordLength) букв"
+        maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
+        attemptsLeft = 8
+        guessedLetters.removeAll()
+        gameOver = false
+        opponentLeftAlert = false
+        currentGameId = webSocketManager.currentGameId
+        playerCount = 2
+    }
+    
+    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?) {
+        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
+        self.attemptsLeft = attemptsLeft
+        if let guessed = guessed {
+            self.guessedLetters = Set(guessed.map { Character($0) })
+        }
+    }
+    
+    func didReceiveGameOver(win: Bool, word: String) {
+        gameOver = true
+        gameOverMessage = win ? "Вы выиграли!\nСлово: \(word)" : "Вы проиграли!\nСлово: \(word)"
+        statusText = "Игра окончена"
+        shouldExitGame = true
+    }
+    
+    func didReceivePlayerLeft(playerId: String) {
+        gameOver = true
+        gameOverMessage = "Друг вышел из игры"
+        shouldExitGame = true
+    }
+    
+    func didReceiveError(_ message: String) {
+        statusText = "Ошибка: \(message)"
+    }
+    
+    func didCreateRoom(gameId: String) {
+        self.createdGameId = gameId
+        self.statusText = "Комната создана. Отправьте ID другу."
+    }
+    
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>) {
+        self.currentGameId = gameId
+        self.statusText = "Игра началась"
+        maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
+        self.attemptsLeft = attemptsLeft
+        guessedLetters = Set(guessed.map { Character($0) })
+        gameOver = false
+        opponentLeftAlert = false
+        playerCount = players
+    }
+}
