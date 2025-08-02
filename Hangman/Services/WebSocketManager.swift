@@ -213,6 +213,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     print("✅ Игра завершилась, result:", result)
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
                 }
+
+            case "GAME_OVER_COOP":
+                if let result = json["result"] as? String,
+                   let word = json["word"] as? String {
+                    print("✅ Совместная игра завершилась, result:", result)
+                    self.delegate?.didReceiveCoopGameOver(result: result, word: word)
+                }
                 
             case "ERROR":
                 if let msg = json["msg"] as? String {

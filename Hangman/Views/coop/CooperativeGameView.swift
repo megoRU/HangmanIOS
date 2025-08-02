@@ -36,8 +36,10 @@ struct CooperativeGameView: View {
             }
         }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-            Button("OK") {
-                viewModel.resetGame()
+            Button("Новая игра") {
+                viewModel.startNewGame()
+            }
+            Button("Выйти") {
                 dismiss()
             }
         } message: {
@@ -225,6 +227,14 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
     
+    func startNewGame() {
+        resetGame()
+        webSocketManager.disconnect()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.connect(mode: self.mode, language: self.selectedLanguage)
+        }
+    }
+
     func resetGame() {
         maskedWord = ""
         attemptsLeft = 8
@@ -236,6 +246,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         createdGameId = nil
         opponentLeftAlert = false
         shouldExitGame = false
+        playerCount = 0
     }
     
     // MARK: - WebSocketManagerDelegate
@@ -304,5 +315,11 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOver = false
         opponentLeftAlert = false
         playerCount = players
+    }
+
+    func didReceiveCoopGameOver(result: String, word: String) {
+        gameOver = true
+        gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
+        statusText = "Игра окончена"
     }
 }

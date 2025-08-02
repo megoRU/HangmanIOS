@@ -15,4 +15,5 @@ protocol WebSocketManagerDelegate: AnyObject {
     func didReceiveWaitingFriend()
     func didCreateRoom(gameId: String)
     func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>)
+    func didReceiveCoopGameOver(result: String, word: String)
 }
