@@ -25,12 +25,11 @@ struct SettingsView: View {
     
     let languages = ["RU": "Русский", "EN": "Английский"]
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
-
     
     var body: some View {
         NavigationStack {
             Form {
-                // Язык
+                // MARK: Язык
                 Section(header: Text("Язык игры")) {
                     Picker("Выберите язык", selection: $selectedLanguage) {
                         ForEach(languages.keys.sorted(), id: \.self) { key in
@@ -40,8 +39,8 @@ struct SettingsView: View {
                     }
                     .pickerStyle(.navigationLink)
                 }
-
-                // Категория
+                
+                // MARK: Категория
                 Section(header: Text("Категория")) {
                     Picker("Выберите категорию", selection: $selectedCategory) {
                         ForEach(categories.keys.sorted(), id: \.self) { key in
@@ -55,29 +54,35 @@ struct SettingsView: View {
                 Section(header: Text("Оформление"),
                         footer: Text(footerText())) {
                     Toggle(isOn: $useSystemTheme) {
-                        Text("Cистемная")
+                        Label("Cистемная", systemImage: "gearshape")
                     }
                     .onChange(of: useSystemTheme) {
                         applyTheme()
                     }
                     
                     Toggle(isOn: $useDarkMode) {
-                        Text("Темный режим")
+                        Label("Темный режим", systemImage: "moon.fill")
                     }
-                    .disabled(useSystemTheme) // Делаем тумблер неактивным при включенных системных настройках
+                    .disabled(useSystemTheme)
                     .onChange(of: useDarkMode) {
                         applyTheme()
                     }
                 }
                 
-                Section(header: Text("Информация")) {
-                    HStack {
-                        Text("Версия")
-                        Spacer()
-                        Text("2.0")
-                            .foregroundColor(.secondary)
+                Section {
+                    Link(destination: URL(string: "https://t.me/mego_RU")!) {
+                        Label("Поддержка", systemImage: "link")
                     }
                 }
+                
+                Section {
+                    HStack {
+                        Label("Версия", systemImage: "info.circle")
+                        Spacer()
+                        Text("2.0.0")
+                    }
+                }
+                
             }
             .navigationTitle("Настройки")
             .onAppear { applyTheme() }
@@ -96,12 +101,12 @@ struct SettingsView: View {
     }
     
     private func footerText() -> String {
-            if useSystemTheme {
-                return "Сейчас используется системная тема устройства."
-            } else {
-                return useDarkMode ? "Сейчас используется темная тема." : "Сейчас используется светлая тема."
-            }
+        if useSystemTheme {
+            return "Сейчас используется системная тема устройства."
+        } else {
+            return useDarkMode ? "Сейчас используется темная тема." : "Сейчас используется светлая тема."
         }
+    }
 }
 
 #Preview {
