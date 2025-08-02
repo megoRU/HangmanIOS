@@ -18,41 +18,39 @@ enum AppTheme: String, CaseIterable, Identifiable {
 import SwiftUI
 
 struct SettingsView: View {
-    @AppStorage("gameLanguageRU") private var isRussian = true
-    @AppStorage("useColorsCategory") private var useColors = false
-    @AppStorage("useFlowersCategory") private var useFlowers = false
-    @AppStorage("useFruitsCategory") private var useFruits = false
+    @AppStorage("gameLanguage") private var selectedLanguage: String = "RU"
+    @AppStorage("gameCategory") private var selectedCategory: String = ""
     @AppStorage("useSystemTheme") private var useSystemTheme = true
     @AppStorage("useDarkMode") private var useDarkMode = false
     
     let languages = ["RU": "Русский", "EN": "Английский"]
-       let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
-       
+    let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+
     
     var body: some View {
         NavigationStack {
             Form {
-                            // Язык
-                            Section(header: Text("Язык игры")) {
-                                Picker("Выберите язык", selection: $selectedLanguage) {
-                                    ForEach(languages.keys.sorted(), id: \.self) { key in
-                                        Text(languages[key] ?? key)
-                                            .tag(key)
-                                    }
-                                }
-                                .pickerStyle(.navigationLink)
-                            }
-                            
-                            // Категория
-                            Section(header: Text("Категория")) {
-                                Picker("Выберите категорию", selection: $selectedCategory) {
-                                    ForEach(categories.keys.sorted(), id: \.self) { key in
-                                        Text(categories[key] ?? key)
-                                            .tag(key)
-                                    }
-                                }
-                                .pickerStyle(.navigationLink)
-                            }
+                // Язык
+                Section(header: Text("Язык игры")) {
+                    Picker("Выберите язык", selection: $selectedLanguage) {
+                        ForEach(languages.keys.sorted(), id: \.self) { key in
+                            Text(languages[key] ?? key)
+                                .tag(key)
+                        }
+                    }
+                    .pickerStyle(.navigationLink)
+                }
+
+                // Категория
+                Section(header: Text("Категория")) {
+                    Picker("Выберите категорию", selection: $selectedCategory) {
+                        ForEach(categories.keys.sorted(), id: \.self) { key in
+                            Text(categories[key] ?? key)
+                                .tag(key)
+                        }
+                    }
+                    .pickerStyle(.navigationLink)
+                }
                 
                 Section(header: Text("Оформление"),
                         footer: Text(footerText())) {
