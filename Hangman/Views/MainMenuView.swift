@@ -1,19 +1,10 @@
 import SwiftUI
 
 struct MainMenuView: View {
-    @AppStorage("appTheme") private var selectedTheme = "system"
-    @Environment(\.colorScheme) var systemScheme
+    @Environment(\.colorScheme) var colorScheme
     
     @State private var attemptsLeft = 8
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-
-    var preferredScheme: ColorScheme? {
-        switch selectedTheme {
-        case "light": return .light
-        case "dark": return .dark
-        default: return nil
-        }
-    }
 
     var body: some View {
         NavigationStack {
@@ -58,16 +49,8 @@ struct MainMenuView: View {
                         .font(.title2)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(
-                            (preferredScheme == .dark || (preferredScheme == nil && systemScheme == .dark))
-                                ? Color.gray.opacity(0.6)
-                                : Color.gray.opacity(0.3)
-                        )
-                        .foregroundColor(
-                            (preferredScheme == .dark || (preferredScheme == nil && systemScheme == .dark))
-                                ? .white
-                                : .black
-                        )
+                        .background(colorScheme == .dark ? Color.gray.opacity(0.6) : Color.gray.opacity(0.3))
+                        .foregroundColor(colorScheme == .dark ? .white : .black)
                         .cornerRadius(12)
                         .padding(.horizontal)
                 }
@@ -76,12 +59,7 @@ struct MainMenuView: View {
             }
             .navigationTitle("Главная")
             .toolbar(.hidden, for: .navigationBar)
-            .toolbarBackground(
-                preferredScheme == .dark ? Color.black : Color.white,
-                for: .navigationBar
-            )
         }
-        .preferredColorScheme(preferredScheme)
     }
 }
 

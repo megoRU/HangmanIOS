@@ -20,9 +20,8 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("gameLanguage") private var selectedLanguage: String = "RU"
     @AppStorage("gameCategory") private var selectedCategory: String = ""
-    @AppStorage("useSystemTheme") private var useSystemTheme = true
-    @AppStorage("useDarkMode") private var useDarkMode = false
-    
+    @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
+
     let languages = ["RU": "Русский", "EN": "Английский"]
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
@@ -51,22 +50,13 @@ struct SettingsView: View {
                     .pickerStyle(.navigationLink)
                 }
                 
-                Section(header: Text("Оформление"),
-                        footer: Text(footerText())) {
-                    Toggle(isOn: $useSystemTheme) {
-                        Label("Cистемная", systemImage: "gearshape")
+                Section(header: Text("Оформление")) {
+                    Picker("Тема", selection: $selectedTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.displayName).tag(theme.rawValue)
+                        }
                     }
-                    .onChange(of: useSystemTheme) {
-                        applyTheme()
-                    }
-                    
-                    Toggle(isOn: $useDarkMode) {
-                        Label("Темный режим", systemImage: "moon.fill")
-                    }
-                    .disabled(useSystemTheme)
-                    .onChange(of: useDarkMode) {
-                        applyTheme()
-                    }
+                    .pickerStyle(.navigationLink)
                 }
                 
                 Section {
@@ -85,26 +75,6 @@ struct SettingsView: View {
                 
             }
             .navigationTitle("Настройки")
-            .onAppear { applyTheme() }
-        }
-    }
-    
-    private func applyTheme() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else { return }
-        
-        if useSystemTheme {
-            window.overrideUserInterfaceStyle = .unspecified
-        } else {
-            window.overrideUserInterfaceStyle = useDarkMode ? .dark : .light
-        }
-    }
-    
-    private func footerText() -> String {
-        if useSystemTheme {
-            return "Сейчас используется системная тема устройства."
-        } else {
-            return useDarkMode ? "Сейчас используется темная тема." : "Сейчас используется светлая тема."
         }
     }
 }
