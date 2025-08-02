@@ -15,76 +15,97 @@ enum AppTheme: String, CaseIterable, Identifiable {
     }
 }
 
+import SwiftUI
+
 struct SettingsView: View {
-    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @AppStorage("gameCategory") private var selectedCategory = ""
-    @AppStorage("appTheme") private var selectedTheme = AppTheme.system.rawValue
+    @AppStorage("gameLanguageRU") private var isRussian = true
+    @AppStorage("useColorsCategory") private var useColors = false
+    @AppStorage("useFlowersCategory") private var useFlowers = false
+    @AppStorage("useFruitsCategory") private var useFruits = false
+    @AppStorage("useSystemTheme") private var useSystemTheme = true
+    @AppStorage("useDarkMode") private var useDarkMode = false
     
-    let languages = ["EN": "English", "RU": "Русский"]
-    let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
-    let themes = AppTheme.allCases
+    let languages = ["RU": "Русский", "EN": "Английский"]
+       let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+       
     
     var body: some View {
-        Form {
-            Section(header: Text("Язык игры")) {
-                Picker("Язык", selection: $selectedLanguage) {
-                    ForEach(languages.keys.sorted(), id: \.self) { key in
-                        Text(languages[key] ?? key).tag(key)
+        NavigationStack {
+            Form {
+                            // Язык
+                            Section(header: Text("Язык игры")) {
+                                Picker("Выберите язык", selection: $selectedLanguage) {
+                                    ForEach(languages.keys.sorted(), id: \.self) { key in
+                                        Text(languages[key] ?? key)
+                                            .tag(key)
+                                    }
+                                }
+                                .pickerStyle(.navigationLink)
+                            }
+                            
+                            // Категория
+                            Section(header: Text("Категория")) {
+                                Picker("Выберите категорию", selection: $selectedCategory) {
+                                    ForEach(categories.keys.sorted(), id: \.self) { key in
+                                        Text(categories[key] ?? key)
+                                            .tag(key)
+                                    }
+                                }
+                                .pickerStyle(.navigationLink)
+                            }
+                
+                Section(header: Text("Оформление"),
+                        footer: Text(footerText())) {
+                    Toggle(isOn: $useSystemTheme) {
+                        Text("Cистемная")
+                    }
+                    .onChange(of: useSystemTheme) {
+                        applyTheme()
+                    }
+                    
+                    Toggle(isOn: $useDarkMode) {
+                        Text("Темный режим")
+                    }
+                    .disabled(useSystemTheme) // Делаем тумблер неактивным при включенных системных настройках
+                    .onChange(of: useDarkMode) {
+                        applyTheme()
                     }
                 }
-                .pickerStyle(.segmented)
-            }
-            
-            Section(header: Text("Категория")) {
-                Picker("Категория", selection: $selectedCategory) {
-                    ForEach(categories.keys.sorted(), id: \.self) { key in
-                        Text(categories[key] ?? key).tag(key)
+                
+                Section(header: Text("Информация")) {
+                    HStack {
+                        Text("Версия")
+                        Spacer()
+                        Text("2.0")
+                            .foregroundColor(.secondary)
                     }
                 }
             }
-            
-            Section(header: Text("Тема")) {
-                Picker("Тема", selection: $selectedTheme) {
-                    ForEach(themes) { theme in
-                        Text(theme.displayName).tag(theme.rawValue)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .onChange(of: selectedTheme) { oldValue, newValue in
-                    applyTheme(AppTheme(rawValue: newValue) ?? .system)
-                }
-                .onAppear {
-                    applyTheme(AppTheme(rawValue: selectedTheme) ?? .system)
-                }
-            }
-            
-            Section(header: Text("Информация")) {
-                HStack {
-                    Text("Версия")
-                    Spacer()
-                    Text("1.0")
-                        .foregroundColor(.secondary)
-                }
-            }
+            .navigationTitle("Настройки")
+            .onAppear { applyTheme() }
         }
-        .navigationTitle("Настройки")
     }
     
-    private func applyTheme(_ theme: AppTheme) {
+    private func applyTheme() {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let window = windowScene.windows.first else { return }
         
-        switch theme {
-        case .system:
+        if useSystemTheme {
             window.overrideUserInterfaceStyle = .unspecified
-        case .light:
-            window.overrideUserInterfaceStyle = .light
-        case .dark:
-            window.overrideUserInterfaceStyle = .dark
+        } else {
+            window.overrideUserInterfaceStyle = useDarkMode ? .dark : .light
         }
     }
+    
+    private func footerText() -> String {
+            if useSystemTheme {
+                return "Сейчас используется системная тема устройства."
+            } else {
+                return useDarkMode ? "Сейчас используется темная тема." : "Сейчас используется светлая тема."
+            }
+        }
 }
 
 #Preview {
-    MainMenuView()
+    SettingsView()
 }
