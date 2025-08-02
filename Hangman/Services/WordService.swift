@@ -5,6 +5,7 @@ struct HangmanResponse: Codable {
 }
 
 class WordService {
+    
     static let shared = WordService()
     
     private init() {}

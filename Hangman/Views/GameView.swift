@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GameView: View {
-    @AppStorage("gameLanguage") private var selectedLanguage = ""
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
     
     @State private var wordToGuess: String = ""
@@ -31,12 +31,18 @@ struct GameView: View {
                     .resizable()
                     .scaledToFit()
                 
+//                Text(displayedWord)
+//                    .font(.system(size: fontSize(for: displayedWord), weight: .bold, design: .monospaced))
+//                    .lineLimit(1)                 // запрещаем перенос
+//                    .minimumScaleFactor(0.5)     // уменьшаем шрифт, чтобы поместилось
+//                    .truncationMode(.tail)       // если не влезает — обрезаем
+//                    .padding(.horizontal)
+                
                 Text(displayedWord)
-                    .font(.system(size: fontSize(for: displayedWord), weight: .bold, design: .monospaced))
-                    .lineLimit(1)                 // запрещаем перенос
-                    .minimumScaleFactor(0.5)     // уменьшаем шрифт, чтобы поместилось
-                    .truncationMode(.tail)       // если не влезает — обрезаем
-                    .padding(.horizontal)
+                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .padding()
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
                     ForEach(alphabet, id: \.self) { letter in
@@ -61,10 +67,10 @@ struct GameView: View {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
                     Text("Hangman")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
 
                     Text("Категория: \(categories[selectedCategory, default: "Любая"])")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
 
                 }

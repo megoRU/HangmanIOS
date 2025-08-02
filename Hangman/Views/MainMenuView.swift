@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MainMenuView: View {
     @Environment(\.colorScheme) var colorScheme
+    @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
     
     @State private var attemptsLeft = 8
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()

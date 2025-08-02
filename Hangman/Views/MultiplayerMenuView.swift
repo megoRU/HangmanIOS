@@ -1,9 +1,8 @@
 import SwiftUI
 
 struct MultiplayerMenuView: View {
-    @AppStorage("gameLanguage") private var selectedLanguage = "EN"
-    @State private var joinGameId = ""
-    @State private var showJoinAlert = false
+    
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
 
     var body: some View {
         VStack(spacing: 30) {
