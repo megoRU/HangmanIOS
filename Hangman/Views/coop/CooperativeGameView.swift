@@ -41,11 +41,17 @@ struct CooperativeGameView: View {
             }
         }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-            Button("Новая игра") {
-                viewModel.startNewGame()
-            }
-            Button("Выйти") {
-                dismiss()
+            if viewModel.coopGameLost {
+                Button("Выйти") {
+                    dismiss()
+                }
+            } else {
+                Button("Новая игра") {
+                    viewModel.startNewGame()
+                }
+                Button("Выйти") {
+                    dismiss()
+                }
             }
         } message: {
             Text(viewModel.gameOverMessage)
@@ -190,6 +196,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
+    @Published var coopGameLost = false
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
@@ -293,6 +300,9 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
         self.newWord = newWord
         self.statusText = "Игра окончена"
+        if result == "LOSE" {
+            self.coopGameLost = true
+        }
     }
 
     func didReceivePlayerLeft(playerId: String) {
