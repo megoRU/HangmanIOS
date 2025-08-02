@@ -216,9 +216,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
 
             case "GAME_OVER_COOP":
                 if let result = json["result"] as? String,
-                   let word = json["word"] as? String {
+                   let word = json["word"] as? String,
+                   let newWord = json["newWord"] as? String {
                     print("✅ Совместная игра завершилась, result:", result)
-                    self.delegate?.didReceiveCoopGameOver(result: result, word: word)
+                    self.delegate?.didReceiveCoopGameOver(result: result, word: word, newWord: newWord)
                 }
                 
             case "ERROR":
