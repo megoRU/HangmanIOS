@@ -229,24 +229,17 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func startNewGame() {
         resetGame()
-        webSocketManager.disconnect()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            self.connect(mode: self.mode, language: self.selectedLanguage)
-        }
     }
 
     func resetGame() {
         maskedWord = ""
         attemptsLeft = 8
         guessedLetters.removeAll()
-        statusText = "Подключение..."
+        statusText = "Ожидание нового слова..."
         gameOver = false
         gameOverMessage = ""
-        currentGameId = nil
-        createdGameId = nil
         opponentLeftAlert = false
         shouldExitGame = false
-        playerCount = 0
     }
     
     // MARK: - WebSocketManagerDelegate

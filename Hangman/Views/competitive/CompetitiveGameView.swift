@@ -23,13 +23,11 @@ struct CompetitiveGameView: View {
             }
         }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-            Button("OK") {
-                viewModel.leaveGame()
-                viewModel.resetGame()
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.connect(language: selectedLanguage)
-                }
+            Button("Новая игра") {
+                viewModel.startNewGame()
+            }
+            Button("Выйти") {
+                dismiss()
             }
         } message: {
             Text(viewModel.gameOverMessage)
@@ -136,6 +134,14 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
 
+    func startNewGame() {
+        resetGame()
+        webSocketManager.disconnect()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.connect(language: self.selectedLanguage)
+        }
+    }
+
     func resetGame() {
         maskedWord = ""
         attemptsLeft = 8
@@ -204,6 +210,10 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
 
     func joinMulti(gameId: String) {
+        // Not used in competitive
+    }
+
+    func didReceiveCoopGameOver(result: String, word: String) {
         // Not used in competitive
     }
 }
