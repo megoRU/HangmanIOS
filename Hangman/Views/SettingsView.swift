@@ -69,7 +69,7 @@ struct SettingsView: View {
                     HStack {
                         Label("Версия", systemImage: "info.circle")
                         Spacer()
-                        Text("2.0.0")
+                        Text("2.1.0")
                     }
                 }
                 

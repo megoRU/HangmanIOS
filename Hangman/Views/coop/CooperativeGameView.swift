@@ -20,12 +20,17 @@ struct CooperativeGameView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack {
-                    Text("Мультиплелер")
-                        .font(.headline)
-                    if viewModel.playerCount > 0 && (mode == .code_friend || mode == .friends) {
+                    Text("Совместная игра")
+                        .font(.system(size: 20, weight: .bold))
+                    
+                    if viewModel.playerCount > 0 {
                         Text("Игроков: \(viewModel.playerCount)")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                    } else {
+                        Text(viewModel.statusText)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.gray)
                     }
                 }
             }
@@ -53,17 +58,32 @@ struct CooperativeGameView: View {
             }
         }
     }
-
+    
     private var connectionView: some View {
-        VStack(spacing: 20) {
-            Text("Ожидание ввода кода...")
-                .font(.title2)
-
+        VStack(spacing: 30) {
+            
             VStack(spacing: 12) {
+                
+                Image(String("7"))
+                    .resizable()
+                    .scaledToFit()
+                
                 TextField("Введите ID игры", text: $manualJoinId)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                            .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.blue.opacity(0.4), lineWidth: 1)
+                    )
                     .padding(.horizontal)
                     .padding(.bottom, 15)
+                    .padding(.top, 20)
+                    .font(.system(size: 16, weight: .medium))
+                    .accentColor(.gray)
                 
                 Button {
                     viewModel.joinMulti(gameId: manualJoinId)
@@ -78,32 +98,37 @@ struct CooperativeGameView: View {
                 }
                 .disabled(manualJoinId.isEmpty)
                 .padding(.horizontal)
-
+                
             }
             Spacer()
         }
         .padding()
     }
-
+    
     private var gameContentView: some View {
         VStack(spacing: 20) {
-            Text(viewModel.statusText)
-                .font(.title2)
-                .multilineTextAlignment(.center)
             
             if let gameId = viewModel.createdGameId {
-                HStack {
-                    Text("Game ID: \(gameId)")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    
-                    Button(action: {
-                        UIPasteboard.general.string = gameId
-                        showCopiedAlert = true
-                    }) {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
+                if viewModel.playerCount < 2 {
+                    HStack {
+                        Text("Код:")
+                            .font(.system(size: 18, weight: .medium))
+                        
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        
+                        Text(gameId)
+                            .font(.system(size: 20, weight: .bold))
+                            .lineLimit(1)
+                            .truncationMode(.middle)
+                        
+                        Button(action: {
+                            UIPasteboard.general.string = gameId
+                            showCopiedAlert = true
+                        }) {
+                            Image(systemName: "doc.on.doc")
+                                .foregroundColor(.blue)
+                        }
                     }
                 }
             }
@@ -159,7 +184,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
     
-    @AppStorage("gameLanguage") private var selectedLanguage = ""
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
     private var mode: MultiplayerMode = .friends
@@ -179,7 +204,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func joinMulti(gameId: String) {
-        currentGameId = gameId
         webSocketManager.joinMulti(gameId: gameId)
     }
     
@@ -226,7 +250,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func didFindMatch(wordLength: Int) {
         // This is for duel, but we can have a generic message
-        statusText = "Игра началась!\nСлово длиной \(wordLength) букв"
+        statusText = "Игра началась!"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
         guessedLetters.removeAll()
@@ -253,17 +277,22 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func didReceivePlayerLeft(playerId: String) {
         gameOver = true
-        gameOverMessage = "Друг вышел из игры"
+        gameOverMessage = "Друг вышел"
         shouldExitGame = true
     }
     
     func didReceiveError(_ message: String) {
+        let localState = statusText
         statusText = "Ошибка: \(message)"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.statusText = localState
+        }
+        
     }
     
     func didCreateRoom(gameId: String) {
         self.createdGameId = gameId
-        self.statusText = "Комната создана. Отправьте ID другу."
+        self.statusText = "Комната создана"
     }
     
     func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>) {

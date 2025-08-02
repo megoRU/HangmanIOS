@@ -4,29 +4,35 @@ struct CompetitiveGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @StateObject private var viewModel = CompetitiveGameViewModel()
     @Environment(\.dismiss) private var dismiss
-    @State private var showCopiedAlert = false
 
     var body: some View {
         gameContentView
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
-                VStack {
-                    Text("Мультиплелер")
-                        .font(.headline)
+                VStack(spacing: 2) {
+                    Text("Соревновательный")
+                        .font(.system(size: 20, weight: .bold))
+
+                    Text(viewModel.statusText)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.gray)
+
                 }
+                .multilineTextAlignment(.center)
             }
         }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
             Button("OK") {
+                viewModel.leaveGame()
                 viewModel.resetGame()
-                dismiss()
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.connect(language: selectedLanguage)
+                }
             }
         } message: {
             Text(viewModel.gameOverMessage)
-        }
-        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
-            Button("OK", role: .cancel) { }
         }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
@@ -43,26 +49,6 @@ struct CompetitiveGameView: View {
 
     private var gameContentView: some View {
         VStack(spacing: 20) {
-            Text(viewModel.statusText)
-                .font(.title2)
-                .multilineTextAlignment(.center)
-
-            if let gameId = viewModel.createdGameId {
-                HStack {
-                    Text("Game ID: \(gameId)")
-                        .font(.subheadline)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-
-                    Button(action: {
-                        UIPasteboard.general.string = gameId
-                        showCopiedAlert = true
-                    }) {
-                        Image(systemName: "doc.on.doc")
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
 
             Image(String(8 - viewModel.attemptsLeft))
                 .resizable()
@@ -115,7 +101,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
 
-    @AppStorage("gameLanguage") private var selectedLanguage = ""
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
 
@@ -174,7 +160,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
 
     func didFindMatch(wordLength: Int) {
-        statusText = "Игра началась!\nСлово длиной \(wordLength) букв"
+        statusText = "Игра началась!"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
         guessedLetters.removeAll()
