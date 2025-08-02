@@ -35,6 +35,11 @@ struct CooperativeGameView: View {
                 }
             }
         }
+        .alert("Игрок вышел", isPresented: $viewModel.shouldExitGame) {
+            Button("Выйти") {
+                dismiss()
+            }
+        }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
             Button("Новая игра") {
                 viewModel.startNewGame()

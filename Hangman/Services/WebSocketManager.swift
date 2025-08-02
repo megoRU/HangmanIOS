@@ -99,6 +99,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             "gameId": gameId,
             "letter": String(letter).uppercased()
         ]
+        print("📤 Отправляем:", msgDict)
         send(json: msgDict)
     }
     
