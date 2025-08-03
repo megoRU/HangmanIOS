@@ -48,28 +48,31 @@ struct CompetitiveGameView: View {
     private var gameContentView: some View {
         VStack(spacing: 20) {
 
-            Image(String(8 - viewModel.attemptsLeft))
-                .resizable()
-                .scaledToFit()
-
-            Text(viewModel.maskedWord)
-                .font(.system(size: 36, weight: .bold, design: .monospaced))
-                .lineLimit(1)
-                .minimumScaleFactor(0.5)
-                .padding()
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                ForEach(viewModel.alphabet, id: \.self) { letter in
-                    Button(action: {
-                        viewModel.chooseLetter(letter)
-                    }) {
-                        Text(String(letter))
-                            .frame(width: 40, height: 40)
-                            .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+            if viewModel.maskedWord != "" {
+                
+                Image(String(8 - viewModel.attemptsLeft))
+                    .resizable()
+                    .scaledToFit()
+                
+                Text(viewModel.maskedWord)
+                    .font(.system(size: 36, weight: .bold, design: .monospaced))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
+                    .padding()
+                
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
+                    ForEach(viewModel.alphabet, id: \.self) { letter in
+                        Button(action: {
+                            viewModel.chooseLetter(letter)
+                        }) {
+                            Text(String(letter))
+                                .frame(width: 40, height: 40)
+                                .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
                     }
-                    .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
                 }
             }
 
