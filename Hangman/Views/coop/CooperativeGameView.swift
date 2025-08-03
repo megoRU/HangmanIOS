@@ -297,6 +297,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     func didReceivePlayerLeft(playerId: String) {
         gameOver = true
+        statusText = "Игра окончена"
         gameOverMessage = "Друг вышел"
         shouldExitGame = true
     }
