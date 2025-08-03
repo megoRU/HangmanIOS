@@ -50,7 +50,7 @@ struct CooperativeGameView: View {
         } message: {
             Text(viewModel.gameOverMessage)
         }
-        .alert("ID скопирован!", isPresented: $showCopiedAlert) {
+        .alert("Скопировано!", isPresented: $showCopiedAlert) {
             Button("OK", role: .cancel) { }
         }
         .onAppear {
@@ -117,13 +117,16 @@ struct CooperativeGameView: View {
             
                 if viewModel.playerCount < 2 {
                     HStack {
+                        
+                        let gameId = viewModel.createdGameId
+                        let buttonText = "Ожидайте..."
+                        
                         Text("Код:")
                             .font(.system(size: 18, weight: .medium))
-                        
                             .lineLimit(1)
                             .truncationMode(.middle)
                         
-                        Text(viewModel.createdGameId)
+                        Text(viewModel.createdGameId ?? buttonText)
                             .font(.system(size: 20, weight: .bold))
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -135,6 +138,7 @@ struct CooperativeGameView: View {
                             Image(systemName: "doc.on.doc")
                                 .foregroundColor(.blue)
                         }
+                        .disabled(gameId == buttonText)
                     }
                 }
         
