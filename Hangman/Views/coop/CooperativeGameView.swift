@@ -115,7 +115,6 @@ struct CooperativeGameView: View {
     private var gameContentView: some View {
         VStack(spacing: 20) {
             
-            if let gameId = viewModel.createdGameId {
                 if viewModel.playerCount < 2 {
                     HStack {
                         Text("Код:")
@@ -124,7 +123,7 @@ struct CooperativeGameView: View {
                             .lineLimit(1)
                             .truncationMode(.middle)
                         
-                        Text(gameId)
+                        Text(viewModel.createdGameId)
                             .font(.system(size: 20, weight: .bold))
                             .lineLimit(1)
                             .truncationMode(.middle)
@@ -138,7 +137,7 @@ struct CooperativeGameView: View {
                         }
                     }
                 }
-            }
+        
             
             Image(String(8 - viewModel.attemptsLeft))
                 .resizable()
