@@ -1,72 +1,34 @@
 import SwiftUI
 import Combine
 
-struct SnakeGameView: View {
-    private let gridSize: Int = 20
-    private let cellSize: CGFloat = 20
-    private let timer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
+class SnakeGame: ObservableObject {
+    enum Direction {
+        case up, down, left, right
+    }
     
-    @State private var snake: [CGPoint] = [CGPoint(x: 5, y: 5)]
-    @State private var food: CGPoint = CGPoint(x: 10, y: 10)
-    @State private var direction: Direction = .right
-    @State private var isGameOver = false
+    let gridSize: Int = 20
+    let cellSize: CGFloat = 20
     
-    var body: some View {
-        VStack {
-            ZStack {
-                Rectangle()
-                    .stroke(Color.gray, lineWidth: 2)
-                    .frame(width: CGFloat(gridSize) * cellSize, height: CGFloat(gridSize) * cellSize)
-                
-                // Еда
-                Rectangle()
-                    .fill(Color.red)
-                    .frame(width: cellSize, height: cellSize)
-                    .position(position(for: food))
-                
-                // Змейка
-                ForEach(0..<snake.count, id: \.self) { i in
-                    Rectangle()
-                        .fill(i == 0 ? Color.green : Color.green.opacity(0.7))
-                        .frame(width: cellSize, height: cellSize)
-                        .position(position(for: snake[i]))
-                }
-                
-                if isGameOver {
-                    Text("Game Over")
-                        .font(.largeTitle)
-                        .foregroundColor(.red)
-                        .position(x: CGFloat(gridSize) * cellSize / 2,
-                                  y: CGFloat(gridSize) * cellSize / 2)
-                }
-            }
-            
-            // Кнопки управления
-            VStack(spacing: 10) {
-                Button("⬆️") { if direction != .down { direction = .up } }
-                HStack(spacing: 40) {
-                    Button("⬅️") { if direction != .right { direction = .left } }
-                    Button("➡️") { if direction != .left { direction = .right } }
-                }
-                Button("⬇️") { if direction != .up { direction = .down } }
-            }
-            .font(.largeTitle)
-            .padding(.top)
-        }
-        .onReceive(timer) { _ in
-            updateGame()
-        }
-        .onTapGesture {
-            if isGameOver { restartGame() }
+    @Published var snake: [CGPoint] = [CGPoint(x: 5, y: 5)]
+    @Published var food: CGPoint = CGPoint(x: 10, y: 10)
+    @Published var isGameOver = false
+    
+    private(set) var direction: Direction = .right
+
+    func changeDirection(_ newDirection: Direction) {
+        switch newDirection {
+        case .up:
+            if direction != .down { direction = .up }
+        case .down:
+            if direction != .up { direction = .down }
+        case .left:
+            if direction != .right { direction = .left }
+        case .right:
+            if direction != .left { direction = .right }
         }
     }
     
-    private func position(for point: CGPoint) -> CGPoint {
-        CGPoint(x: (point.x + 0.5) * cellSize,
-                y: (point.y + 0.5) * cellSize)
-    }
-    
-    private func updateGame() {
+    func updateGame() {
         guard !isGameOver else { return }
         
         var newHead = snake[0]
@@ -78,7 +40,6 @@ struct SnakeGameView: View {
         case .right: newHead.x += 1
         }
         
-        // Проверка столкновений
         if newHead.x < 0 || newHead.x >= CGFloat(gridSize) ||
             newHead.y < 0 || newHead.y >= CGFloat(gridSize) ||
             snake.contains(newHead) {
@@ -95,6 +56,11 @@ struct SnakeGameView: View {
         }
     }
     
+    func position(for point: CGPoint) -> CGPoint {
+        CGPoint(x: (point.x + 0.5) * cellSize,
+                y: (point.y + 0.5) * cellSize)
+    }
+
     private func spawnFood() {
         var newFood: CGPoint
         repeat {
@@ -104,7 +70,7 @@ struct SnakeGameView: View {
         food = newFood
     }
     
-    private func restartGame() {
+    func restartGame() {
         snake = [CGPoint(x: 5, y: 5)]
         food = CGPoint(x: 10, y: 10)
         direction = .right
@@ -112,8 +78,55 @@ struct SnakeGameView: View {
     }
 }
 
-enum Direction {
-    case up, down, left, right
+struct SnakeGameView: View {
+    @StateObject private var game = SnakeGame()
+    private let timer = Timer.publish(every: 0.2, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        VStack {
+            ZStack {
+                Rectangle()
+                    .stroke(Color.gray, lineWidth: 2)
+                    .frame(width: game.cellSize * CGFloat(game.gridSize), height: game.cellSize * CGFloat(game.gridSize))
+
+                Rectangle()
+                    .fill(Color.red)
+                    .frame(width: game.cellSize, height: game.cellSize)
+                    .position(game.position(for: game.food))
+
+                ForEach(0..<game.snake.count, id: \.self) { i in
+                    Rectangle()
+                        .fill(i == 0 ? Color.green : Color.green.opacity(0.7))
+                        .frame(width: game.cellSize, height: game.cellSize)
+                        .position(game.position(for: game.snake[i]))
+                }
+
+                if game.isGameOver {
+                    Text("Game Over")
+                        .font(.largeTitle)
+                        .foregroundColor(.red)
+                }
+            }
+
+            // Кнопки управления
+            VStack(spacing: 10) {
+                Button("⬆️") { game.changeDirection(.up) }
+                HStack(spacing: 40) {
+                    Button("⬅️") { game.changeDirection(.left) }
+                    Button("➡️") { game.changeDirection(.right) }
+                }
+                Button("⬇️") { game.changeDirection(.down) }
+            }
+            .font(.largeTitle)
+            .padding(.top)
+        }
+        .onReceive(timer) { _ in
+            game.updateGame()
+        }
+        .onTapGesture {
+            if game.isGameOver { game.restartGame() }
+        }
+    }
 }
 
 struct ContentView: View {
