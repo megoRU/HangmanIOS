@@ -7,59 +7,82 @@ struct CompetitiveGameView: View {
 
     var body: some View {
         gameContentView
-        .navigationTitle("")
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: 2) {
-                    Text("Соревновательный")
-                        .font(.system(size: 20, weight: .bold))
-
-                    Text(viewModel.statusText)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
-
+            .navigationTitle("")
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    VStack(spacing: 2) {
+                        Text("Соревновательный")
+                            .font(.system(size: 20, weight: .bold))
+                        Text(viewModel.statusText)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.gray)
+                    }
+                    .multilineTextAlignment(.center)
                 }
-                .multilineTextAlignment(.center)
             }
-        }
-        .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-            Button("Новая игра") {
-                viewModel.startNewGame()
+            .alert("Игра окончена", isPresented: $viewModel.gameOver) {
+                Button("Новая игра") {
+                    viewModel.startNewGame()
+                }
+                Button("Выйти") {
+                    dismiss()
+                }
+            } message: {
+                Text(viewModel.gameOverMessage)
             }
-            Button("Выйти") {
-                dismiss()
+            .onAppear {
+                print("🔌 onConnect:", selectedLanguage)
+                viewModel.connect(language: selectedLanguage)
             }
-        } message: {
-            Text(viewModel.gameOverMessage)
-        }
-        .onAppear {
-            print("🔌 onConnect:", selectedLanguage)
-            viewModel.connect(language: selectedLanguage)
-        }
-        .onDisappear {
-            print("🔌 onDisappear вызван")
-            viewModel.leaveGame()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.disconnect()
+            .onDisappear {
+                print("🔌 onDisappear вызван")
+                viewModel.leaveGame()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    viewModel.disconnect()
+                }
             }
+    }
+
+    private var waitingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                .scaleEffect(2)
+
+            AnimatedDotsText(text: "Ожидание соперника")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.gray)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                colors: [Color.white, Color.blue.opacity(0.1)],
+                startPoint: .top,
+                endPoint: .bottom)
+        )
+        .cornerRadius(16)
+        .padding()
     }
 
     private var gameContentView: some View {
         VStack(spacing: 20) {
-
-            if viewModel.maskedWord != "" {
-                
+            
+            if viewModel.statusText == "Подключение..." {
+                waitingView
+            }
+            else if viewModel.statusText == "Ожидание соперника..." {
+                waitingView
+            } else if viewModel.maskedWord != "" {
                 Image(String(8 - viewModel.attemptsLeft))
                     .resizable()
                     .scaledToFit()
-                
+
                 Text(viewModel.maskedWord)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                     .padding()
-                
+
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
                     ForEach(viewModel.alphabet, id: \.self) { letter in
                         Button(action: {
@@ -82,12 +105,22 @@ struct CompetitiveGameView: View {
     }
 }
 
+struct AnimatedDotsText: View {
+    let text: String
+    @State private var dots = 0
+    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+
+    var body: some View {
+        Text(text + String(repeating: ".", count: dots))
+            .onReceive(timer) { _ in
+                dots = (dots + 1) % 4
+            }
+    }
+}
+
 #Preview {
     MainMenuView()
 }
-
-import Foundation
-import SwiftUI
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
 

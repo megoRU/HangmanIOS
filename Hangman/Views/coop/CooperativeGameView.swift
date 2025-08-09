@@ -108,37 +108,57 @@ struct CooperativeGameView: View {
         .padding()
     }
     
+    private var waitingFriendView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                .scaleEffect(2)
+            
+            AnimatedDotsText(text: "Ожидаем друга")
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(
+            LinearGradient(
+                colors: [Color.white, Color.blue.opacity(0.1)],
+                startPoint: .top,
+                endPoint: .bottom)
+        )
+        .cornerRadius(16)
+        .padding()
+    }
+    
     private var gameContentView: some View {
         VStack(spacing: 20) {
-            
-                if viewModel.playerCount < 2 {
-                    HStack {
-                        
-                        let gameId = viewModel.createdGameId
-                        let buttonText = "Ожидайте..."
-                        
-                        Text("Код:")
-                            .font(.system(size: 18, weight: .medium))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        
-                        Text(viewModel.createdGameId ?? buttonText)
-                            .font(.system(size: 20, weight: .bold))
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        
-                        Button(action: {
-                            UIPasteboard.general.string = gameId
-                            showCopiedAlert = true
-                        }) {
-                            Image(systemName: "doc.on.doc")
-                                .foregroundColor(.blue)
-                        }
-                        .disabled(gameId == buttonText)
+            if viewModel.statusText == "Ожидаем друга..."
+                || viewModel.statusText == "Подключение..." {
+                waitingFriendView
+                
+                HStack {
+                    let gameId = viewModel.createdGameId
+                    let buttonText = "Ожидайте..."
+                    
+                    Text("Код:")
+                        .font(.system(size: 18, weight: .medium))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    
+                    Text(viewModel.createdGameId ?? buttonText)
+                        .font(.system(size: 20, weight: .bold))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    
+                    Button(action: {
+                        UIPasteboard.general.string = gameId
+                        showCopiedAlert = true
+                    }) {
+                        Image(systemName: "doc.on.doc")
+                            .foregroundColor(.blue)
                     }
+                    .disabled(gameId == buttonText)
                 }
-        
-            if viewModel.playerCount >= 2 {
+            } else {
                 
                 Image(String(8 - viewModel.attemptsLeft))
                     .resizable()
@@ -163,9 +183,9 @@ struct CooperativeGameView: View {
                         }
                         .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
                     }
+                    
                 }
             }
-            
             Spacer()
         }
         .padding()
@@ -241,7 +261,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
             self.newWord = nil
         }
     }
-
+    
     func resetGame() {
         attemptsLeft = 8
         guessedLetters.removeAll()
@@ -263,7 +283,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didFindMatch(wordLength: Int) {
-        // This is for duel, but we can have a generic message
         statusText = "Игра началась!"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
@@ -295,7 +314,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.newWord = newWord
         self.statusText = "Игра окончена"
     }
-
+    
     func didReceivePlayerLeft(playerId: String) {
         gameOver = true
         statusText = "Игра окончена"
@@ -309,7 +328,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.statusText = localState
         }
-        
     }
     
     func didCreateRoom(gameId: String) {
