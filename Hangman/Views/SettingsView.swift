@@ -21,7 +21,7 @@ struct SettingsView: View {
     @AppStorage("gameLanguage") private var selectedLanguage: String = "RU"
     @AppStorage("gameCategory") private var selectedCategory: String = ""
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
-
+    
     let languages = ["RU": "Русский", "EN": "Английский"]
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
@@ -36,7 +36,6 @@ struct SettingsView: View {
                                 .tag(key)
                         }
                     }
-                    .pickerStyle(.navigationLink)
                 }
                 
                 // MARK: Категория
@@ -47,7 +46,7 @@ struct SettingsView: View {
                                 .tag(key)
                         }
                     }
-                    .pickerStyle(.navigationLink)
+                    
                 }
                 
                 Section(header: Text("Оформление")) {
@@ -56,7 +55,6 @@ struct SettingsView: View {
                             Text(theme.displayName).tag(theme.rawValue)
                         }
                     }
-                    .pickerStyle(.navigationLink)
                 }
                 
                 Section {
@@ -80,5 +78,5 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    MainMenuView()
 }

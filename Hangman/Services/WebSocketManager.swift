@@ -21,7 +21,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         self.mode = mode
         self.lang = language
         
-        guard let url = URL(string: "wss://hangman.megoru.ru/ws/hangman") else {
+        guard let url = URL(string: "wss://hangman.megoru.ru/ws") else {
             delegate?.didReceiveError("Неверный URL WebSocket")
             return
         }

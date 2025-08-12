@@ -51,7 +51,8 @@ struct MultiplayerMenuView: View {
 
             Spacer()
         }
-        .navigationTitle("")
+        .navigationTitle("Назад")
+        .toolbar(.hidden, for: .navigationBar)
     }
 }
 
