@@ -23,20 +23,13 @@ struct GameView: View {
     }
     
     var body: some View {
-        VStack(spacing: 30) {
+        VStack {
             if isLoading {
                 ProgressView("Загрузка слова...")
             } else {
                 Image(String(8 - attemptsLeft))
                     .resizable()
                     .scaledToFit()
-                
-//                Text(displayedWord)
-//                    .font(.system(size: fontSize(for: displayedWord), weight: .bold, design: .monospaced))
-//                    .lineLimit(1)                 // запрещаем перенос
-//                    .minimumScaleFactor(0.5)     // уменьшаем шрифт, чтобы поместилось
-//                    .truncationMode(.tail)       // если не влезает — обрезаем
-//                    .padding(.horizontal)
                 
                 Text(displayedWord)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))

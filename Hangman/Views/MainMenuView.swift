@@ -20,6 +20,7 @@ struct MainMenuView: View {
                     Image(String(attemptsLeft))
                         .resizable()
                         .scaledToFit()
+                        .padding(.horizontal, 20) // отступ слева и справа
                         .onReceive(timer) { _ in
                             attemptsLeft = (attemptsLeft + 1) % 9
                         }

@@ -9,12 +9,11 @@ struct MultiplayerMenuView: View {
             Text("Мультиплеер")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .padding(.top, 40)
             
             Image(String(7))
                 .resizable()
                 .scaledToFit()
-
+            
             NavigationLink(destination: CompetitiveGameView()) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
@@ -47,7 +46,6 @@ struct MultiplayerMenuView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
             }
-
 
             Spacer()
         }
