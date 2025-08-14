@@ -203,7 +203,7 @@ import SwiftUI
 
 final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    @StateObject private var manager = StatsManager.shared
+    let manager = StatsManager.shared
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()

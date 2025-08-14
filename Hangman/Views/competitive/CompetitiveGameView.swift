@@ -121,7 +121,7 @@ struct AnimatedDotsText: View {
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    @StateObject private var manager = StatsManager.shared
+    let manager = StatsManager.shared
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()

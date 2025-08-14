@@ -34,7 +34,7 @@ struct StatisticsView: View {
     var body: some View {
         ZStack {
             LinearGradient(
-                gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.2)]),
+                gradient: Gradient(colors: [Color.white, Color.white]),
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -95,7 +95,7 @@ struct StatisticsView: View {
                     }
                     .frame(height: 400)
                     .padding()
-                    .background(Color.white.opacity(0.1))
+                    .background(Color.white)
                     .cornerRadius(12)
                     .padding(.horizontal)
                 }
@@ -116,17 +116,18 @@ struct StatCard: View {
     var body: some View {
         VStack {
             Text(title)
-                .font(.caption)
-                .foregroundColor(.gray)
+                .font(.system(size: 14, weight: .medium)) // кастомный размер и вес
+                .foregroundColor(.secondary) // более мягкий серый
             Text(value)
-                .font(.title2)
+                .font(.system(size: 24, weight: .bold)) // кастомный размер и вес
                 .fontWeight(.bold)
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color.white.opacity(0.2))
+        .background(Color(.systemGray6)) // светлый фон
         .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // чуть объёма
     }
 }
 
