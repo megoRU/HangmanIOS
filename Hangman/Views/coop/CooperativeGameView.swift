@@ -3,13 +3,13 @@ import SwiftUI
 struct CooperativeGameView: View {
     let mode: MultiplayerMode
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @StateObject private var viewModel: CooperativeGameViewModel
+    @StateObject private var viewModel = CooperativeGameViewModel()
     @Environment(\.dismiss) private var dismiss
 
-    init(mode: MultiplayerMode, manager: StatsManager) {
+    init(mode: MultiplayerMode) {
         self.mode = mode
-        self._viewModel = StateObject(wrappedValue: CooperativeGameViewModel(manager: manager))
     }
+    
     @State private var showCopiedAlert = false
     @State private var manualJoinId = ""
     
@@ -195,7 +195,7 @@ struct CooperativeGameView: View {
 }
 
 #Preview {
-    CooperativeGameView(mode: .friends, manager: StatsManager.shared)
+    MainMenuView()
 }
 
 import Foundation
@@ -203,7 +203,7 @@ import SwiftUI
 
 final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    private var manager: StatsManager
+    @StateObject private var manager = StatsManager.shared
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -220,10 +220,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     private(set) var currentGameId: String?
     private var mode: MultiplayerMode = .friends
     private var newWord: String?
-    
-    init(manager: StatsManager) {
-        self.manager = manager
-    }
 
     public var alphabet: [Character] {
         selectedLanguage == "RU"

@@ -2,12 +2,8 @@ import SwiftUI
 
 struct CompetitiveGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @StateObject private var viewModel: CompetitiveGameViewModel
+    @StateObject private var viewModel =  CompetitiveGameViewModel()
     @Environment(\.dismiss) private var dismiss
-
-    init(manager: StatsManager) {
-        self._viewModel = StateObject(wrappedValue: CompetitiveGameViewModel(manager: manager))
-    }
 
     var body: some View {
         gameContentView
@@ -120,12 +116,12 @@ struct AnimatedDotsText: View {
 }
 
 #Preview {
-    CompetitiveGameView(manager: StatsManager.shared)
+    MainMenuView()
 }
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    private var manager: StatsManager
+    @StateObject private var manager = StatsManager.shared
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -140,10 +136,6 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
-
-    init(manager: StatsManager) {
-        self.manager = manager
-    }
 
     public var alphabet: [Character] {
         selectedLanguage == "RU"

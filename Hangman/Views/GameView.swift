@@ -4,8 +4,8 @@ struct GameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
     
-    @EnvironmentObject private var manager: StatsManager
-    
+    @StateObject private var manager = StatsManager.shared
+
     @State private var wordToGuess: String = ""
     @State private var guessedLetters: [Character] = []
     @State private var attemptsLeft = 8
@@ -126,8 +126,5 @@ struct GameView: View {
 }
 
 #Preview {
-    NavigationStack {
-        GameView()
-            .environmentObject(StatsManager.shared)
-    }
+    MainMenuView()
 }

@@ -1,9 +1,9 @@
 import Foundation
 
 enum GameMode: String, CaseIterable, Identifiable, Codable {
-    case single = "Single"
-    case multiplayer = "Multiplayer"
-    case cooperative = "Cooperative"
+    case single = "Одиночная"
+    case multiplayer = "Соревновательная"
+    case cooperative = "Совместная"
     
     var id: String { self.rawValue }
 }

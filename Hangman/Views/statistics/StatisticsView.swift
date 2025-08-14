@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct StatisticsView: View {
-    @EnvironmentObject var manager: StatsManager
+    @StateObject private var manager = StatsManager.shared
     @State private var selectedMode: GameMode = .single
     
     var chartData: [(date: Date, wins: Int, losses: Int)] {
@@ -46,7 +46,7 @@ struct StatisticsView: View {
                         Text(mode.rawValue).tag(mode)
                     }
                 }
-                .pickerStyle(SegmentedPickerStyle())
+                .pickerStyle(.menu)
                 .padding(.horizontal)
 
                 if manager.stats.filter({ $0.mode == selectedMode }).isEmpty {
@@ -93,7 +93,7 @@ struct StatisticsView: View {
                             AxisValueLabel(format: .dateTime.day().month())
                         }
                     }
-                    .frame(height: 300)
+                    .frame(height: 400)
                     .padding()
                     .background(Color.white.opacity(0.1))
                     .cornerRadius(12)
@@ -131,8 +131,5 @@ struct StatCard: View {
 }
 
 #Preview {
-    NavigationView {
-        StatisticsView()
-            .environmentObject(StatsManager.shared)
-    }
+    MainMenuView()
 }

@@ -15,7 +15,7 @@ struct MultiplayerMenuView: View {
                 .resizable()
                 .scaledToFit()
             
-            NavigationLink(destination: CompetitiveGameView(manager: manager)) {
+            NavigationLink(destination: CompetitiveGameView()) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -26,7 +26,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .friends, manager: manager)) {
+            NavigationLink(destination: CooperativeGameView(mode: .friends)) {
                 Text("🎮 Создать игру")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -37,7 +37,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .code_friend, manager: manager)) {
+            NavigationLink(destination: CooperativeGameView(mode: .code_friend)) {
                 Text("🔗 Подключиться к игре")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -56,6 +56,5 @@ struct MultiplayerMenuView: View {
 }
 
 #Preview {
-    MultiplayerMenuView()
-        .environmentObject(StatsManager.shared)
+    MainMenuView()
 }
