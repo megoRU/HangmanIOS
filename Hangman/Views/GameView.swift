@@ -126,5 +126,8 @@ struct GameView: View {
 }
 
 #Preview {
-    MainMenuView()
+    NavigationStack {
+        GameView()
+            .environmentObject(StatsManager.shared)
+    }
 }

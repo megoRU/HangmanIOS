@@ -12,7 +12,7 @@ class StatsManager: ObservableObject {
     }
 
     func addStat(mode: GameMode, result: GameResult) {
-        let newStat = GameStats(mode: mode, date: Date(), result: result)
+        let newStat = GameStats(id: UUID(), mode: mode, date: Date(), result: result)
         stats.append(newStat)
         saveStats()
     }

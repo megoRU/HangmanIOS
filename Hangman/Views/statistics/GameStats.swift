@@ -14,7 +14,7 @@ enum GameResult: String, Codable {
 }
 
 struct GameStats: Identifiable, Codable {
-    let id = UUID()
+    let id: UUID
     let mode: GameMode
     let date: Date
     let result: GameResult

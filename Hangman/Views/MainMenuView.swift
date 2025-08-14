@@ -80,4 +80,5 @@ struct MainMenuView: View {
 
 #Preview {
     MainMenuView()
+        .environmentObject(StatsManager.shared)
 }
