@@ -1,6 +1,10 @@
 import Foundation
+import SwiftUI
 
 final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
+    @AppStorage("name") private var name: String = ""
+    @AppStorage("avatarImage") private var avatarData: Data?
+
     private var webSocketTask: URLSessionWebSocketTask?
     private var urlSession: URLSession!
     private(set) var currentGameId: String?
@@ -38,9 +42,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func joinMulti(gameId: String) {
         guard isConnected else { return }
-        let msg: [String: Any] = [
+        var msg: [String: Any] = [
             "type": "JOIN_MULTI",
-            "gameId": gameId
+            "gameId": gameId,
+            "name": name.isEmpty ? nil : name,
+            "image": avatarData?.base64EncodedString()
         ]
         print("📤 Отправляем JOIN_MULTI:", msg)
         send(json: msg)
@@ -79,11 +85,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
         var msgDict: [String: Any]
+        let nameValue = name.isEmpty ? nil : name
+        let imageValue = avatarData?.base64EncodedString()
+
         switch mode {
         case .duel:
-            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased()]
+            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue]
         case .friends:
-            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased()]
+            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue]
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -184,20 +193,28 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 }
                 
             case "PLAYER_JOINED":
-                if let attemptsLeft = json["attemptsLeft"] as? Int,
-                   let wordLength = json["wordLength"] as? Int,
-                   let players = json["players"] as? Int,
-                   let gameId = json["gameId"] as? String,
-                   let guessed = json["guessed"] as? [String] {
-                    print("✅ PLAYER_JOINED, players:", players)
-                    self.currentGameId = gameId
+                struct PlayerJoinedPayload: Decodable {
+                    let attemptsLeft: Int
+                    let wordLength: Int
+                    let players: [Player]
+                    let gameId: String
+                    let guessed: [String]
+                }
+
+                do {
+                    let payload = try JSONDecoder().decode(PlayerJoinedPayload.self, from: data)
+                    print("✅ PLAYER_JOINED, players:", payload.players.count)
+                    self.currentGameId = payload.gameId
                     self.delegate?.didReceivePlayerJoined(
-                        attemptsLeft: attemptsLeft,
-                        wordLength: wordLength,
-                        players: players,
-                        gameId: gameId,
-                        guessed: Set(guessed)
+                        attemptsLeft: payload.attemptsLeft,
+                        wordLength: payload.wordLength,
+                        players: payload.players,
+                        gameId: payload.gameId,
+                        guessed: Set(payload.guessed)
                     )
+                } catch {
+                    print("❌ Ошибка декодирования PLAYER_JOINED:", error)
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
                 }
                 
             case "PLAYER_LEFT":

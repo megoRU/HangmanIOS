@@ -4,6 +4,7 @@ struct CompetitiveGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @StateObject private var viewModel =  CompetitiveGameViewModel()
     @Environment(\.dismiss) private var dismiss
+    @State private var showingPlayerList = false
 
     var body: some View {
         gameContentView
@@ -19,6 +20,15 @@ struct CompetitiveGameView: View {
                     }
                     .multilineTextAlignment(.center)
                 }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingPlayerList = true }) {
+                        Image(systemName: "person.2.fill")
+                    }
+                    .disabled(viewModel.players.isEmpty)
+                }
+            }
+            .sheet(isPresented: $showingPlayerList) {
+                PlayerListView(players: viewModel.players)
             }
             .alert("Игра окончена", isPresented: $viewModel.gameOver) {
                 Button("Новая игра") {
@@ -132,6 +142,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
+    @Published var players: [Player] = []
 
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
@@ -187,6 +198,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         createdGameId = nil
         opponentLeftAlert = false
         shouldExitGame = false
+        players.removeAll()
     }
 
     // MARK: - WebSocketManagerDelegate
@@ -243,8 +255,9 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         // This should not be called in duel mode
     }
 
-    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>) {
-        // This should not be called in duel mode
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
+        self.players = players
+        self.playerCount = players.count
     }
 
     func joinMulti(gameId: String) {

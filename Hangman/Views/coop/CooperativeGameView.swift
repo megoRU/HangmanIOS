@@ -12,6 +12,7 @@ struct CooperativeGameView: View {
     
     @State private var showCopiedAlert = false
     @State private var manualJoinId = ""
+    @State private var showingPlayerList = false
     
     var body: some View {
         Group {
@@ -39,6 +40,12 @@ struct CooperativeGameView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingPlayerList = true }) {
+                    Image(systemName: "person.2.fill")
+                }
+                .disabled(viewModel.players.isEmpty)
+            }
         }
         .alert("Игрок вышел", isPresented: $viewModel.shouldExitGame) {
             Button("Выйти") {
@@ -57,6 +64,9 @@ struct CooperativeGameView: View {
         }
         .alert("Скопировано!", isPresented: $showCopiedAlert) {
             Button("OK", role: .cancel) { }
+        }
+        .sheet(isPresented: $showingPlayerList) {
+            PlayerListView(players: viewModel.players)
         }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
@@ -194,6 +204,47 @@ struct CooperativeGameView: View {
     }
 }
 
+struct PlayerListView: View {
+    let players: [Player]
+
+    var body: some View {
+        NavigationView {
+            List(players) { player in
+                HStack {
+                    if let base64String = player.image,
+                       let imageData = Data(base64Encoded: base64String),
+                       let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                    } else {
+                        Image(systemName: "person.fill")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 40, height: 40)
+                            .clipShape(Circle())
+                            .padding(8)
+                            .background(Color.gray.opacity(0.2))
+                            .clipShape(Circle())
+                    }
+                    Text(player.name)
+                        .font(.headline)
+                }
+            }
+            .navigationTitle("Игроки")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Готово") {
+                        // This button will be handled by the sheet's isPresented binding
+                    }
+                }
+            }
+        }
+    }
+}
+
 #Preview {
     MainMenuView()
 }
@@ -214,6 +265,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
+    @Published var players: [Player] = []
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
@@ -273,6 +325,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOverMessage = ""
         opponentLeftAlert = false
         shouldExitGame = false
+        players.removeAll()
     }
     
     // MARK: - WebSocketManagerDelegate
@@ -342,7 +395,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.statusText = "Комната создана"
     }
     
-    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: Int, gameId: String, guessed: Set<String>) {
+    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
         self.currentGameId = gameId
         self.statusText = "Игра началась"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
@@ -350,6 +403,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         guessedLetters = Set(guessed.map { Character($0) })
         gameOver = false
         opponentLeftAlert = false
-        playerCount = players
+        self.players = players
+        self.playerCount = players.count
     }
 }
