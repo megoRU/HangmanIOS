@@ -112,10 +112,15 @@ struct SettingsView: View {
                                     )
                                     .autocorrectionDisabled()
                                     .textInputAutocapitalization(.words)
+                                    .disabled(!isEditingName)
 
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
-                                    .font(.title3)
+                                Button {
+                                    isEditingName.toggle()
+                                } label: {
+                                    Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil.circle.fill")
+                                        .foregroundColor(isEditingName ? .green : .accentColor)
+                                        .font(.title)
+                                }
                             }
                         }
                     }
