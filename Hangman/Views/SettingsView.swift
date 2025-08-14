@@ -74,8 +74,10 @@ struct SettingsView: View {
                         .buttonStyle(.plain)
                         .onChange(of: selectedItem) { _ in
                             Task {
-                                if let data = try? await selectedItem?.loadTransferable(type: Data.self) {
-                                    avatarData = data
+                                if let data = try? await selectedItem?.loadTransferable(type: Data.self),
+                                   let uiImage = UIImage(data: data) {
+                                    let resizedImage = uiImage.resize(to: CGSize(width: 64, height: 64))
+                                    avatarData = resizedImage?.jpegData(compressionQuality: 0.8)
                                 }
                             }
                         }
@@ -186,4 +188,14 @@ struct SettingsView: View {
 
 #Preview {
     MainMenuView()
+}
+
+extension UIImage {
+    func resize(to newSize: CGSize) -> UIImage? {
+        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
+        self.draw(in: CGRect(origin: .zero, size: newSize))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return newImage
+    }
 }
