@@ -3,8 +3,13 @@ import SwiftUI
 struct CooperativeGameView: View {
     let mode: MultiplayerMode
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @StateObject private var viewModel = CooperativeGameViewModel()
+    @StateObject private var viewModel: CooperativeGameViewModel
     @Environment(\.dismiss) private var dismiss
+
+    init(mode: MultiplayerMode, manager: StatsManager) {
+        self.mode = mode
+        self._viewModel = StateObject(wrappedValue: CooperativeGameViewModel(manager: manager))
+    }
     @State private var showCopiedAlert = false
     @State private var manualJoinId = ""
     
@@ -190,7 +195,7 @@ struct CooperativeGameView: View {
 }
 
 #Preview {
-    MainMenuView()
+    CooperativeGameView(mode: .friends, manager: StatsManager.shared)
 }
 
 import Foundation
@@ -198,7 +203,7 @@ import SwiftUI
 
 final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    @StateObject private var manager = StatsManager()
+    private var manager: StatsManager
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -216,6 +221,10 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     private var mode: MultiplayerMode = .friends
     private var newWord: String?
     
+    init(manager: StatsManager) {
+        self.manager = manager
+    }
+
     public var alphabet: [Character] {
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
@@ -305,7 +314,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         statusText = "Игра окончена"
         shouldExitGame = true
         
-        manager.addStat(mode: .cooperative, result: win ? .win : .lose)
+        manager.addStat(mode: .cooperative, result: win ? GameResult.win : GameResult.lose)
     }
     
     func didReceiveCoopGameOver(result: String, word: String, newWord: String) {
@@ -314,7 +323,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.newWord = newWord
         self.statusText = "Игра окончена"
         
-        manager.addStat(mode: .cooperative, result: result == "WIN" ? .win : .lose)
+        manager.addStat(mode: .cooperative, result: result == "WIN" ? GameResult.win : GameResult.lose)
     }
     
     func didReceivePlayerLeft(playerId: String) {

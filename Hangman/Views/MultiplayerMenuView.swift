@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MultiplayerMenuView: View {
     
+    @EnvironmentObject var manager: StatsManager
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
 
     var body: some View {
@@ -14,7 +15,7 @@ struct MultiplayerMenuView: View {
                 .resizable()
                 .scaledToFit()
             
-            NavigationLink(destination: CompetitiveGameView()) {
+            NavigationLink(destination: CompetitiveGameView(manager: manager)) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -25,7 +26,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .friends)) {
+            NavigationLink(destination: CooperativeGameView(mode: .friends, manager: manager)) {
                 Text("🎮 Создать игру")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -36,7 +37,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .code_friend)) {
+            NavigationLink(destination: CooperativeGameView(mode: .code_friend, manager: manager)) {
                 Text("🔗 Подключиться к игре")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -55,5 +56,6 @@ struct MultiplayerMenuView: View {
 }
 
 #Preview {
-    MainMenuView()
+    MultiplayerMenuView()
+        .environmentObject(StatsManager.shared)
 }

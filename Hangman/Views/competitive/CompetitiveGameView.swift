@@ -2,8 +2,12 @@ import SwiftUI
 
 struct CompetitiveGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @StateObject private var viewModel = CompetitiveGameViewModel()
+    @StateObject private var viewModel: CompetitiveGameViewModel
     @Environment(\.dismiss) private var dismiss
+
+    init(manager: StatsManager) {
+        self._viewModel = StateObject(wrappedValue: CompetitiveGameViewModel(manager: manager))
+    }
 
     var body: some View {
         gameContentView
@@ -116,12 +120,12 @@ struct AnimatedDotsText: View {
 }
 
 #Preview {
-    MainMenuView()
+    CompetitiveGameView(manager: StatsManager.shared)
 }
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
-    @StateObject private var manager = StatsManager()
+    private var manager: StatsManager
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -136,6 +140,10 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
+
+    init(manager: StatsManager) {
+        self.manager = manager
+    }
 
     public var alphabet: [Character] {
         selectedLanguage == "RU"
@@ -224,7 +232,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         statusText = "Игра окончена"
         shouldExitGame = true
         
-        manager.addStat(mode: .multiplayer, result: win ? .win : .lose)
+        manager.addStat(mode: .multiplayer, result: win ? GameResult.win : GameResult.lose)
     }
 
     func didReceivePlayerLeft(playerId: String) {
@@ -232,7 +240,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOverMessage = "Противник вышел. Победа за вами!"
         shouldExitGame = true
         
-        manager.addStat(mode: .multiplayer, result: .win)
+        manager.addStat(mode: .multiplayer, result: GameResult.win)
     }
 
     func didReceiveError(_ message: String) {
