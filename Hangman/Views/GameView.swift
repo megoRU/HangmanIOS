@@ -4,13 +4,12 @@ struct GameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
     
-    @StateObject private var manager = StatsManager()
+    @EnvironmentObject private var manager: StatsManager
     
     @State private var wordToGuess: String = ""
     @State private var guessedLetters: [Character] = []
     @State private var attemptsLeft = 8
     @State private var isLoading = true
-    @State private var didAddStat = false
     
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
@@ -80,19 +79,15 @@ struct GameView: View {
         }
         .navigationTitle("")
         .alert("Игра окончена", isPresented: .constant(gameOver())) {
-            Button("OK") {
-                if !didAddStat {
-                    if attemptsLeft == 0 {
-                        manager.addStat(mode: .single, result: .lose)
-                    } else {
-                        manager.addStat(mode: .single, result: .win)
-                    }
-                    didAddStat = true
-                }
-                resetGame()
-            }
+            Button("OK", action: resetGame)
         } message: {
             Text(attemptsLeft == 0 ? "Вы проиграли! Слово: \(wordToGuess)" : "Вы выиграли! Слово: \(wordToGuess)")
+        }
+        .onChange(of: gameOver()) { isGameOver in
+            if isGameOver {
+                let result: GameResult = attemptsLeft == 0 ? .lose : .win
+                manager.addStat(mode: .single, result: result)
+            }
         }
         .onAppear(perform: loadWord)
     }

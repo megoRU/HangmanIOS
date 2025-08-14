@@ -25,6 +25,7 @@ struct HangmanApp: App {
     var body: some Scene {
         WindowGroup {
             MainMenuView()
+                .environmentObject(StatsManager.shared)
                 .preferredColorScheme(preferredScheme)
         }
     }

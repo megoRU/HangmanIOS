@@ -3,7 +3,7 @@ import SwiftUI
 struct MainMenuView: View {
     @Environment(\.colorScheme) var colorScheme
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
-    @StateObject private var manager = StatsManager()
+    @EnvironmentObject var manager: StatsManager
 
     @State private var attemptsLeft = 8
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -59,7 +59,7 @@ struct MainMenuView: View {
             
             // Статистика
             NavigationStack {
-                StatisticsView(manager: manager)
+                StatisticsView()
                     .navigationTitle("Статистика")
             }
             .tabItem {
