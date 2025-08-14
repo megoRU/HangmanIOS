@@ -181,7 +181,6 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     func startNewGame() {
         resetGame()
-        webSocketManager.disconnect()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.connect(language: self.selectedLanguage)
         }

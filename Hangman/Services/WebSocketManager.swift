@@ -134,6 +134,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             switch result {
             case .failure(let error):
                 DispatchQueue.main.async {
+                    print(error.localizedDescription)
                     self.delegate?.didReceiveError("Ошибка приёмки: \(error.localizedDescription)")
                 }
                 self.isConnected = false
