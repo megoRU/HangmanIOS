@@ -25,6 +25,7 @@ struct SettingsView: View {
     @AppStorage("name") private var name: String = ""
     @AppStorage("avatarImage") private var avatarData: Data?
 
+    @State private var isEditingName = false
     @State private var selectedItem: PhotosPickerItem?
 
     let languages = ["RU": "Русский", "EN": "Английский"]
@@ -80,9 +81,9 @@ struct SettingsView: View {
                         }
 
                         // Если имя пустое — кнопка, иначе поле с галкой
-                        if name.isEmpty {
+                        if name.isEmpty && !isEditingName {
                             Button {
-                                // Можно поставить автофокус на TextField, если захочешь
+                                isEditingName = true
                             } label: {
                                 HStack {
                                     Image(systemName: "pencil")
