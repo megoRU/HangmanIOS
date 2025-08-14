@@ -43,7 +43,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 // MARK: Аватарка + имя
-                Section {
+                Section(header: Text("Персонализация"))  {
                     HStack(spacing: 16) {
                         // Аватарка
                         PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -86,15 +86,23 @@ struct SettingsView: View {
                                 isEditingName = true
                             } label: {
                                 HStack {
+                                    Spacer()
                                     Image(systemName: "pencil")
                                     Text("Задать имя")
+                                    
+                                    Spacer()
                                 }
                                 .foregroundColor(.blue)
-                                .padding(.vertical, 8)
+                                .padding(.vertical, 10)
                                 .padding(.horizontal, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.blue, lineWidth: 2)
+                                        .stroke(
+                                            LinearGradient(colors: [.blue, .purple],
+                                                           startPoint: .leading,
+                                                           endPoint: .trailing),
+                                            lineWidth: 2
+                                        )
                                 )
                             }
                         } else {
