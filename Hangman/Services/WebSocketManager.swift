@@ -42,11 +42,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func joinMulti(gameId: String) {
         guard isConnected else { return }
-        var msg: [String: Any] = [
+        let msg: [String: Any] = [
             "type": "JOIN_MULTI",
             "gameId": gameId,
-            "name": name.isEmpty ? nil : name,
-            "image": avatarData?.base64EncodedString()
+            "name": name.isEmpty ? NSNull() : name,
+            "image": avatarData?.base64EncodedString() ?? NSNull()
         ]
         print("📤 Отправляем JOIN_MULTI:", msg)
         send(json: msg)
@@ -85,8 +85,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
         var msgDict: [String: Any]
-        let nameValue = name.isEmpty ? nil : name
-        let imageValue = avatarData?.base64EncodedString()
+        let nameValue: Any = name.isEmpty ? NSNull() : name
+        let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
 
         switch mode {
         case .duel:
@@ -165,11 +165,20 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 self.delegate?.didReceiveWaiting()
                 
             case "MATCH_FOUND":
-                if let gameId = json["gameId"] as? String,
-                   let wordLength = json["wordLength"] as? Int {
-                    print("✅ MATCH_FOUND, wordLength:", wordLength)
-                    self.currentGameId = gameId
-                    self.delegate?.didFindMatch(wordLength: wordLength)
+                struct MatchFoundPayload: Decodable {
+                    let gameId: String
+                    let wordLength: Int
+                    let players: [Player]
+                }
+
+                do {
+                    let payload = try JSONDecoder().decode(MatchFoundPayload.self, from: data)
+                    print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
+                    self.currentGameId = payload.gameId
+                    self.delegate?.didFindMatch(wordLength: payload.wordLength, players: payload.players)
+                } catch {
+                    print("❌ Ошибка декодирования MATCH_FOUND:", error)
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
                 }
                 
             case "STATE_UPDATE":
