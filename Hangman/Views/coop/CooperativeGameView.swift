@@ -67,7 +67,7 @@ struct CooperativeGameView: View {
     }
     
     private var connectionView: some View {
-        VStack(spacing: 30) {
+        VStack(spacing: 2) {
             
             VStack(spacing: 12) {
                 
@@ -130,7 +130,7 @@ struct CooperativeGameView: View {
     }
     
     private var gameContentView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 25) {
             if viewModel.statusText == "Ожидаем друга..."
                 || viewModel.statusText == "Подключение..." {
                 waitingFriendView
@@ -159,16 +159,14 @@ struct CooperativeGameView: View {
                     .disabled(gameId == buttonText)
                 }
             } else {
-                
                 Image(String(8 - viewModel.attemptsLeft))
                     .resizable()
-                    .scaledToFit()
+                    .padding(.top, -50)
                 
                 Text(viewModel.maskedWord)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                    .padding()
                 
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
                     ForEach(viewModel.alphabet, id: \.self) { letter in
@@ -186,7 +184,6 @@ struct CooperativeGameView: View {
                     
                 }
             }
-            Spacer()
         }
         .padding()
     }

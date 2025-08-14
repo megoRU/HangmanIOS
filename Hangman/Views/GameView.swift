@@ -18,30 +18,37 @@ struct GameView: View {
     }
     
     private var displayedWord: String {
-        let spaced = wordToGuess.map { guessedLetters.contains($0) ? String($0) : "_" }.joined(separator: "\u{2007}")
-        return spaced
+        wordToGuess
+            .map { guessedLetters.contains($0) ? String($0) : "_" }
+            .joined(separator: "\u{2007}")
     }
     
     var body: some View {
-        VStack {
+        VStack(spacing: 25) {
             if isLoading {
                 ProgressView("Загрузка слова...")
+                    .frame(maxHeight: .infinity)
             } else {
+                // Картинка фиксированного размера
                 Image(String(8 - attemptsLeft))
                     .resizable()
-                    .scaledToFit()
+                    .padding(.top, -50)
                 
+                // Слово
                 Text(displayedWord)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
-                    .padding()
                 
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7), spacing: 8) {
+                // Клавиатура фиксированной высоты
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7),
+                    spacing: 8
+                ) {
                     ForEach(alphabet, id: \.self) { letter in
-                        Button(action: {
+                        Button {
                             chooseLetter(letter)
-                        }) {
+                        } label: {
                             Text(String(letter))
                                 .frame(width: 40, height: 40)
                                 .background(guessedLetters.contains(letter) ? Color.gray : Color.blue)
@@ -52,25 +59,23 @@ struct GameView: View {
                     }
                 }
                 
-                Spacer()
             }
         }
         .padding()
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
-                    Text("Hangman")
+                    Text("Одиночная")
                         .font(.system(size: 20, weight: .bold))
 
                     Text("Категория: \(categories[selectedCategory, default: "Любая"])")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
-
                 }
                 .multilineTextAlignment(.center)
             }
         }
-        .navigationTitle("") // скрываем стандартный заголовок
+        .navigationTitle("")
         .alert("Игра окончена", isPresented: .constant(gameOver())) {
             Button("OK") {
                 resetGame()
@@ -78,9 +83,7 @@ struct GameView: View {
         } message: {
             Text(attemptsLeft == 0 ? "Вы проиграли! Слово: \(wordToGuess)" : "Вы выиграли! Слово: \(wordToGuess)")
         }
-        .onAppear {
-            loadWord()
-        }
+        .onAppear(perform: loadWord)
     }
     
     private func chooseLetter(_ letter: Character) {
@@ -113,19 +116,6 @@ struct GameView: View {
                 self.isLoading = false
             }
         }
-    }
-}
-
-private func fontSize(for displayedWord: String) -> CGFloat {
-    let length = displayedWord.filter { $0 != "\u{2007}" && $0 != "_" }.count
-
-    switch length {
-    case 0...5: return 40
-    case 6...8: return 32
-    case 9...12: return 28
-    case 13...16: return 22
-    case 17...20: return 18
-    default: return 16
     }
 }
 
