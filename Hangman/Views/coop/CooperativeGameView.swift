@@ -198,6 +198,7 @@ import SwiftUI
 
 final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
+    @StateObject private var manager = StatsManager()
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -303,6 +304,8 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOverMessage = win ? "Вы выиграли!\nСлово: \(word)" : "Вы проиграли!\nСлово: \(word)"
         statusText = "Игра окончена"
         shouldExitGame = true
+        
+        manager.addStat(mode: .cooperative, result: win ? .win : .lose)
     }
     
     func didReceiveCoopGameOver(result: String, word: String, newWord: String) {
@@ -310,6 +313,8 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
         self.newWord = newWord
         self.statusText = "Игра окончена"
+        
+        manager.addStat(mode: .cooperative, result: result == "WIN" ? .win : .lose)
     }
     
     func didReceivePlayerLeft(playerId: String) {

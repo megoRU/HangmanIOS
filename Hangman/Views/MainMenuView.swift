@@ -3,7 +3,8 @@ import SwiftUI
 struct MainMenuView: View {
     @Environment(\.colorScheme) var colorScheme
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
-    
+    @StateObject private var manager = StatsManager()
+
     @State private var attemptsLeft = 8
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -20,11 +21,11 @@ struct MainMenuView: View {
                     Image(String(attemptsLeft))
                         .resizable()
                         .scaledToFit()
-                        .padding(.horizontal, 20) // отступ слева и справа
+                        .padding(.horizontal, 20)
                         .onReceive(timer) { _ in
                             attemptsLeft = (attemptsLeft + 1) % 9
                         }
-
+                    
                     NavigationLink(destination: GameView()) {
                         Text("🎮 Одиночная")
                             .font(.title2)
@@ -46,7 +47,7 @@ struct MainMenuView: View {
                             .cornerRadius(12)
                             .padding(.horizontal)
                     }
-
+                    
                     Spacer()
                 }
                 .navigationTitle("Главная")
@@ -55,7 +56,16 @@ struct MainMenuView: View {
             .tabItem {
                 Label("Главная", systemImage: "house")
             }
-
+            
+            // Статистика
+            NavigationStack {
+                StatisticsView(manager: manager)
+                    .navigationTitle("Статистика")
+            }
+            .tabItem {
+                Label("Статистика", systemImage: "chart.bar")
+            }
+            
             // Настройки
             NavigationStack {
                 SettingsView()

@@ -4,10 +4,13 @@ struct GameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
     
+    @StateObject private var manager = StatsManager()
+    
     @State private var wordToGuess: String = ""
     @State private var guessedLetters: [Character] = []
     @State private var attemptsLeft = 8
     @State private var isLoading = true
+    @State private var didAddStat = false
     
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
@@ -67,7 +70,7 @@ struct GameView: View {
                 VStack(spacing: 2) {
                     Text("Одиночная")
                         .font(.system(size: 20, weight: .bold))
-
+                    
                     Text("Категория: \(categories[selectedCategory, default: "Любая"])")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
@@ -78,6 +81,14 @@ struct GameView: View {
         .navigationTitle("")
         .alert("Игра окончена", isPresented: .constant(gameOver())) {
             Button("OK") {
+                if !didAddStat {
+                    if attemptsLeft == 0 {
+                        manager.addStat(mode: .single, result: .lose)
+                    } else {
+                        manager.addStat(mode: .single, result: .win)
+                    }
+                    didAddStat = true
+                }
                 resetGame()
             }
         } message: {

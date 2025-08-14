@@ -120,7 +120,8 @@ struct AnimatedDotsText: View {
 }
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
-
+    
+    @StateObject private var manager = StatsManager()
     @Published var maskedWord = ""
     @Published var attemptsLeft = 8
     @Published var guessedLetters = Set<Character>()
@@ -222,12 +223,16 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOverMessage = win ? "Вы выиграли!\nСлово: \(word)" : "Вы проиграли!\nСлово: \(word)"
         statusText = "Игра окончена"
         shouldExitGame = true
+        
+        manager.addStat(mode: .multiplayer, result: win ? .win : .lose)
     }
 
     func didReceivePlayerLeft(playerId: String) {
         gameOver = true
         gameOverMessage = "Противник вышел. Победа за вами!"
         shouldExitGame = true
+        
+        manager.addStat(mode: .multiplayer, result: .win)
     }
 
     func didReceiveError(_ message: String) {
