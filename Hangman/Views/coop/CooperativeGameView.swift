@@ -316,7 +316,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         manager.addStat(mode: .cooperative, result: win ? GameResult.win : GameResult.lose)
     }
     
-    func didReceiveCoopGameOver(result: String, wordLength: int) {
+    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
         self.gameOver = true
         self.gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
         self.statusText = "Игра окончена"
