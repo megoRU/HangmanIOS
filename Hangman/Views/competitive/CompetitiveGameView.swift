@@ -45,11 +45,8 @@ struct CompetitiveGameView: View {
                 viewModel.connect(language: selectedLanguage)
             }
             .onDisappear {
-                print("🔌 onDisappear вызван")
+                print("🔌 onDisappear вызван: " + (viewModel.currentGameId ?? ""))
                 viewModel.leaveGame()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    viewModel.disconnect()
-                }
             }
     }
 
@@ -163,12 +160,11 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     // MARK: - Выход и разрыв
     func leaveGame() {
-        print("🔌 leaveGame вызван")
+        print("🔌 leaveGame вызван: " + (currentGameId ?? ""))
         webSocketManager.leaveGame(gameId: currentGameId)
     }
 
     func disconnect() {
-        leaveGame()
         webSocketManager.disconnect()
     }
 
@@ -239,12 +235,17 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         manager.addStat(mode: .multiplayer, result: win ? GameResult.win : GameResult.lose)
     }
 
-    func didReceivePlayerLeft(playerId: String) {
+    func didReceiveGameCanceled(word: String) {
         gameOver = true
-        gameOverMessage = "Противник вышел. Победа за вами!"
+        gameOverMessage = "Игра была отменена.\nСлово: \(word)"
+        statusText = "Игра окончена"
         shouldExitGame = true
-        
-        manager.addStat(mode: .multiplayer, result: GameResult.win)
+
+    }
+    
+    func didReceivePlayerLeft(name: String) {
+        // Not used in competitive
+//        manager.addStat(mode: .multiplayer, result: GameResult.win)
     }
 
     func didReceiveError(_ message: String) {

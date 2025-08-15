@@ -4,7 +4,7 @@ import SwiftUI
 final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     @AppStorage("name") private var name: String = ""
     @AppStorage("avatarImage") private var avatarData: Data?
-
+    
     private var webSocketTask: URLSessionWebSocketTask?
     private var urlSession: URLSession!
     private(set) var currentGameId: String?
@@ -87,7 +87,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         var msgDict: [String: Any]
         let nameValue: Any = name.isEmpty ? NSNull() : name
         let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
-
+        
         switch mode {
         case .duel:
             msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue]
@@ -171,7 +171,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let wordLength: Int
                     let players: [Player]
                 }
-
+                
                 do {
                     let payload = try JSONDecoder().decode(MatchFoundPayload.self, from: data)
                     print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
@@ -180,6 +180,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 } catch {
                     print("❌ Ошибка декодирования MATCH_FOUND:", error)
                     self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
+                }
+                
+                
+            case "GAME_CANCELED":
+                if let word = json["word"] as? String {
+                    print("✅ GAME_CANCELED, word:", word)
+                    self.delegate?.didReceiveGameCanceled(word: word)
                 }
                 
             case "STATE_UPDATE":
@@ -210,7 +217,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let gameId: String
                     let guessed: [String]
                 }
-
+                
                 do {
                     let payload = try JSONDecoder().decode(PlayerJoinedPayload.self, from: data)
                     print("✅ PLAYER_JOINED, players:", payload.players.count)
@@ -229,9 +236,9 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 
             case "PLAYER_LEFT":
                 DispatchQueue.main.async {
-                    if let playerId = json["playerId"] as? String {
-                        print("✅ PLAYER_LEFT, playerId:", playerId)
-                        self.delegate?.didReceivePlayerLeft(playerId: playerId)
+                    if let name = json["name"] as? String {
+                        print("✅ PLAYER_LEFT, name: \(name)")
+                        self.delegate?.didReceivePlayerLeft(name: name)
                     }
                 }
                 
@@ -241,7 +248,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     print("✅ Игра завершилась, result:", result)
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
                 }
-
+                
             case "GAME_OVER_COOP":
                 if let result = json["result"] as? String,
                    let word = json["word"] as? String,

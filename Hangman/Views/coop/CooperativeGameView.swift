@@ -73,11 +73,8 @@ struct CooperativeGameView: View {
             viewModel.connect(mode: mode, language: selectedLanguage)
         }
         .onDisappear {
-            print("🔌 onDisappear вызван")
+            print("🔌 onDisappear вызван: " + (viewModel.currentGameId ?? ""))
             viewModel.leaveGame()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                viewModel.disconnect()
-            }
         }
     }
     
@@ -252,12 +249,11 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     // MARK: - Выход и разрыв
     func leaveGame() {
-        print("🔌 leaveGame вызван")
+        print("🔌 leaveGame вызван: " + (createdGameId ?? ""))
         webSocketManager.leaveGame(gameId: currentGameId)
     }
     
     func disconnect() {
-        leaveGame()
         webSocketManager.disconnect()
     }
     
@@ -335,11 +331,23 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         manager.addStat(mode: .cooperative, result: result == "WIN" ? GameResult.win : GameResult.lose)
     }
     
-    func didReceivePlayerLeft(playerId: String) {
+    func didReceiveGameCanceled(word: String) {
         gameOver = true
+        gameOverMessage = "Игра была отменена.\nСлово: \(word)"
         statusText = "Игра окончена"
-        gameOverMessage = "Друг вышел"
         shouldExitGame = true
+
+    }
+    
+    func didReceivePlayerLeft(name: String) {
+        playerCount -= 1
+        players.removeAll { $0.name == name }
+
+        let localState = statusText
+        statusText = "Игрок \(name) вышел"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.statusText = localState
+        }
     }
     
     func didReceiveError(_ message: String) {
