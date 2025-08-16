@@ -6,7 +6,6 @@ struct MainMenuView: View {
     @EnvironmentObject var manager: StatsManager
 
     @State private var attemptsLeft = 8
-    @State private var isTabBarHidden = false
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -38,7 +37,7 @@ struct MainMenuView: View {
                             .padding(.horizontal)
                     }
                     
-                    NavigationLink(destination: MultiplayerMenuView(isTabBarHidden: $isTabBarHidden)) {
+                    NavigationLink(destination: MultiplayerMenuView()) {
                         Text("👥 Мультиплеер")
                             .font(.title2)
                             .frame(maxWidth: .infinity)
@@ -54,7 +53,6 @@ struct MainMenuView: View {
                 .navigationTitle("Главная")
                 .toolbar(.hidden, for: .navigationBar)
             }
-            .toolbar(isTabBarHidden ? .hidden : .visible, for: .tabBar)
             .tabItem {
                 Label("Главная", systemImage: "house")
             }

@@ -5,7 +5,6 @@ struct CompetitiveGameView: View {
     @StateObject private var viewModel =  CompetitiveGameViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingPlayerList = false
-    @Binding var isTabBarHidden: Bool
 
     var body: some View {
         gameContentView
@@ -42,12 +41,10 @@ struct CompetitiveGameView: View {
                 Text(viewModel.gameOverMessage)
             }
             .onAppear {
-                isTabBarHidden = true
                 print("🔌 onConnect:", selectedLanguage)
                 viewModel.connect(language: selectedLanguage)
             }
             .onDisappear {
-                isTabBarHidden = false
                 print("🔌 onDisappear вызван: " + (viewModel.currentGameId ?? ""))
                 viewModel.leaveGame()
             }
@@ -126,7 +123,7 @@ struct AnimatedDotsText: View {
 }
 
 #Preview {
-    CompetitiveGameView(isTabBarHidden: .constant(false))
+    MainMenuView()
 }
 
 final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
