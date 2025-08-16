@@ -4,6 +4,7 @@ struct MultiplayerMenuView: View {
     
     @EnvironmentObject var manager: StatsManager
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
+    @Binding var isTabBarHidden: Bool
 
     var body: some View {
         VStack(spacing: 30) {
@@ -15,7 +16,7 @@ struct MultiplayerMenuView: View {
                 .resizable()
                 .scaledToFit()
             
-            NavigationLink(destination: CompetitiveGameView()) {
+            NavigationLink(destination: CompetitiveGameView(isTabBarHidden: $isTabBarHidden)) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -26,7 +27,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .friends)) {
+            NavigationLink(destination: CooperativeGameView(mode: .friends, isTabBarHidden: $isTabBarHidden)) {
                 Text("🎮 Создать игру")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -37,7 +38,7 @@ struct MultiplayerMenuView: View {
                     .padding(.horizontal)
             }
 
-            NavigationLink(destination: CooperativeGameView(mode: .code_friend)) {
+            NavigationLink(destination: CooperativeGameView(mode: .code_friend, isTabBarHidden: $isTabBarHidden)) {
                 Text("🔗 Подключиться к игре")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -56,5 +57,5 @@ struct MultiplayerMenuView: View {
 }
 
 #Preview {
-    MainMenuView()
+    MultiplayerMenuView(isTabBarHidden: .constant(false))
 }

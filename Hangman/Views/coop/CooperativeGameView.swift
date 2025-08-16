@@ -5,9 +5,11 @@ struct CooperativeGameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @StateObject private var viewModel = CooperativeGameViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Binding var isTabBarHidden: Bool
 
-    init(mode: MultiplayerMode) {
+    init(mode: MultiplayerMode, isTabBarHidden: Binding<Bool>) {
         self.mode = mode
+        self._isTabBarHidden = isTabBarHidden
     }
     
     @State private var showCopiedAlert = false
@@ -22,7 +24,6 @@ struct CooperativeGameView: View {
                 gameContentView
             }
         }
-        .toolbar(.hidden, for: .tabBar)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {
@@ -72,10 +73,12 @@ struct CooperativeGameView: View {
             PlayerListView(players: viewModel.players)
         }
         .onAppear {
+            isTabBarHidden = true
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
         }
         .onDisappear {
+            isTabBarHidden = false
             print("🔌 onDisappear вызван: " + (viewModel.currentGameId ?? ""))
             viewModel.leaveGame()
         }
@@ -205,7 +208,7 @@ struct CooperativeGameView: View {
 }
 
 #Preview {
-    MainMenuView()
+    CooperativeGameView(mode: .friends, isTabBarHidden: .constant(false))
 }
 
 import Foundation
