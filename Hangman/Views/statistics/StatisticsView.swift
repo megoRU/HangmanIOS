@@ -33,12 +33,9 @@ struct StatisticsView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                gradient: Gradient(colors: [Color.white, Color.white]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // фон в зависимости от темы
+            Color(.systemBackground)
+                .ignoresSafeArea()
             
             VStack(spacing: 20) {
                 Picker("Режим игры", selection: $selectedMode) {
@@ -54,7 +51,7 @@ struct StatisticsView: View {
                         Spacer()
                         Text("Нет данных для отображения")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         Spacer()
                     }
                 } else {
@@ -90,12 +87,12 @@ struct StatisticsView: View {
                         AxisMarks(values: .stride(by: .day)) { value in
                             AxisGridLine()
                             AxisTick()
-                            AxisValueLabel(format: .dateTime.day().month())
+                            AxisValueLabel(format: russianDateFormat)
                         }
                     }
                     .frame(height: 400)
                     .padding()
-                    .background(Color.white)
+                    .background(Color(.secondarySystemBackground)) // под тему
                     .cornerRadius(12)
                     .padding(.horizontal)
                 }
@@ -108,26 +105,35 @@ struct StatisticsView: View {
     }
 }
 
+var russianDateFormat: Date.FormatStyle {
+    var style = Date.FormatStyle.dateTime.day().month()
+    style.locale = Locale(identifier: "ru_RU")
+    return style
+}
+
 struct StatCard: View {
     let title: String
     let value: String
     let color: Color
 
     var body: some View {
-        VStack {
+        VStack(spacing: 6) {
             Text(title)
-                .font(.system(size: 14, weight: .medium)) // кастомный размер и вес
-                .foregroundColor(.secondary) // более мягкий серый
+                .font(.system(size: 13, weight: .medium)) // чуть меньше
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(nil) // перенос разрешён
+
             Text(value)
-                .font(.system(size: 24, weight: .bold)) // кастомный размер и вес
-                .fontWeight(.bold)
+                .font(.system(size: 22, weight: .bold)) // чуть меньше чем 24
                 .foregroundColor(color)
+                .minimumScaleFactor(0.8) // если число длинное — уменьшит
         }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.systemGray6)) // светлый фон
+        .frame(maxWidth: .infinity, minHeight: 70)
+        .padding(8)
+        .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2) // чуть объёма
+        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 

@@ -16,6 +16,8 @@ class WordService {
         if let category = category, !category.isEmpty {
             queryItems.append(URLQueryItem(name: "category", value: category))
         }
+        queryItems.append(URLQueryItem(name: "lenght", value: "12"))
+        
         urlComponents?.queryItems = queryItems
         
         guard let url = urlComponents?.url else { return }
