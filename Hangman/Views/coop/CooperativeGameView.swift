@@ -22,6 +22,7 @@ struct CooperativeGameView: View {
                 gameContentView
             }
         }
+        .toolbar(.hidden, for: .tabBar)
         .navigationTitle("")
         .toolbar {
             ToolbarItem(placement: .principal) {

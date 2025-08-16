@@ -5,10 +5,6 @@ struct MultiplayerMenuView: View {
     @EnvironmentObject var manager: StatsManager
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
 
-    @State private var isPresentingCompetitiveGame = false
-    @State private var isPresentingCooperativeGameCreate = false
-    @State private var isPresentingCooperativeGameJoin = false
-
     var body: some View {
         VStack(spacing: 30) {
             Text("Мультиплеер")
@@ -19,9 +15,7 @@ struct MultiplayerMenuView: View {
                 .resizable()
                 .scaledToFit()
             
-            Button(action: {
-                isPresentingCompetitiveGame = true
-            }) {
+            NavigationLink(destination: CompetitiveGameView()) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -31,13 +25,8 @@ struct MultiplayerMenuView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
             }
-            .fullScreenCover(isPresented: $isPresentingCompetitiveGame) {
-                CompetitiveGameView()
-            }
 
-            Button(action: {
-                isPresentingCooperativeGameCreate = true
-            }) {
+            NavigationLink(destination: CooperativeGameView(mode: .friends)) {
                 Text("🎮 Создать игру")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -47,13 +36,8 @@ struct MultiplayerMenuView: View {
                     .cornerRadius(12)
                     .padding(.horizontal)
             }
-            .fullScreenCover(isPresented: $isPresentingCooperativeGameCreate) {
-                CooperativeGameView(mode: .friends)
-            }
 
-            Button(action: {
-                isPresentingCooperativeGameJoin = true
-            }) {
+            NavigationLink(destination: CooperativeGameView(mode: .code_friend)) {
                 Text("🔗 Подключиться к игре")
                     .font(.title2)
                     .frame(maxWidth: .infinity)
@@ -62,9 +46,6 @@ struct MultiplayerMenuView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                     .padding(.horizontal)
-            }
-            .fullScreenCover(isPresented: $isPresentingCooperativeGameJoin) {
-                CooperativeGameView(mode: .code_friend)
             }
 
             Spacer()

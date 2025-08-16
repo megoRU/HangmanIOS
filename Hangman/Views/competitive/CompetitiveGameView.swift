@@ -8,6 +8,7 @@ struct CompetitiveGameView: View {
 
     var body: some View {
         gameContentView
+            .toolbar(.hidden, for: .tabBar)
             .navigationTitle("")
             .toolbar {
                 ToolbarItem(placement: .principal) {
