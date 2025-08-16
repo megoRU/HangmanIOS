@@ -265,7 +265,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         // Not used in competitive
     }
 
-    func didReceiveCoopGameOver(result: String, word: String, newWord: String) {
+    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
         // Not used in competitive
     }
 }

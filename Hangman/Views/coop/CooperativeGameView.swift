@@ -51,6 +51,8 @@ struct CooperativeGameView: View {
             Button("Выйти") {
                 dismiss()
             }
+        } message: {
+            Text(viewModel.gameOverMessage)
         }
         .alert("Игра окончена", isPresented: $viewModel.gameOver) {
             Button("Новая игра") {
@@ -326,11 +328,9 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceiveGameCanceled(word: String) {
-        gameOver = true
-        gameOverMessage = "Игра была отменена.\nСлово: \(word)"
-        statusText = "Игра окончена"
-        shouldExitGame = true
-
+        self.gameOverMessage = "Игра была отменена.\nСлово: \(word)"
+        self.statusText = "Игра окончена"
+        self.shouldExitGame = true
     }
     
     func didReceivePlayerLeft(name: String) {
