@@ -227,7 +227,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     private var webSocketManager = WebSocketManager()
     private(set) var currentGameId: String?
     private var mode: MultiplayerMode = .friends
-    private var newWord: String?
 
     public var alphabet: [Character] {
         selectedLanguage == "RU"
@@ -266,10 +265,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func startNewGame() {
         resetGame()
-        if let newWord = newWord {
-            maskedWord = String(repeating: "_ ", count: newWord.count).trimmingCharacters(in: .whitespaces)
-            self.newWord = nil
-        }
     }
     
     func resetGame() {
@@ -280,7 +275,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         gameOverMessage = ""
         opponentLeftAlert = false
         shouldExitGame = false
-        players.removeAll()
     }
     
     // MARK: - WebSocketManagerDelegate
@@ -322,12 +316,12 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         manager.addStat(mode: .cooperative, result: win ? GameResult.win : GameResult.lose)
     }
     
-    func didReceiveCoopGameOver(result: String, word: String, newWord: String) {
+    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
         self.gameOver = true
         self.gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
-        self.newWord = newWord
         self.statusText = "Игра окончена"
-        
+        self.maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
+    
         manager.addStat(mode: .cooperative, result: result == "WIN" ? GameResult.win : GameResult.lose)
     }
     
