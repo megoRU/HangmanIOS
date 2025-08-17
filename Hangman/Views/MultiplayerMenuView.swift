@@ -50,9 +50,6 @@ struct MultiplayerMenuView: View {
 
             Spacer()
         }
-        .onDisappear {
-            WebSocketManager.shared.disconnect()
-        }
         .navigationTitle("Назад")
         .toolbar(.hidden, for: .navigationBar)
     }
