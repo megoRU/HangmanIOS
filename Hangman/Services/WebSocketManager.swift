@@ -10,6 +10,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var webSocketTask: URLSessionWebSocketTask?
     private var urlSession: URLSession!
     private(set) var currentGameId: String?
+    private var rejoinGameId: String?
     weak var delegate: WebSocketManagerDelegate?
     
     private var isConnected = false
@@ -21,6 +22,26 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         super.init()
         let config = URLSessionConfiguration.default
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func appDidBecomeActive() {
+        print("☀️ Приложение стало активным.")
+        if !isConnected && currentGameId != nil {
+            print("🔌 Соединение было разорвано, пытаемся переподключиться...")
+            rejoinGameId = currentGameId
+            connect(mode: self.mode, language: self.lang)
+        }
     }
     
     func connect(mode: MultiplayerMode, language: String) {
@@ -85,7 +106,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         isConnected = true
         print("✅ WebSocket подключен")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            self.sendFindOrCreate()
+            if let gameIdToRejoin = self.rejoinGameId {
+                print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")
+                self.joinMulti(gameId: gameIdToRejoin)
+                self.rejoinGameId = nil
+            } else {
+                self.sendFindOrCreate()
+            }
         }
     }
     
