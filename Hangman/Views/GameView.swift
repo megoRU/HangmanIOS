@@ -89,7 +89,11 @@ struct GameView: View {
                 manager.addStat(mode: .single, result: result)
             }
         }
-        .onAppear(perform: loadWord)
+        .onAppear {
+            if wordToGuess.isEmpty {
+                loadWord()
+            }
+        }
     }
     
     private func chooseLetter(_ letter: Character) {
