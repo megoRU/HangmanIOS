@@ -11,6 +11,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var urlSession: URLSession!
     private(set) var currentGameId: String?
     private var rejoinGameId: String?
+    private var playerId: String?
     weak var delegate: WebSocketManagerDelegate?
     
     private var isConnected = false
@@ -18,6 +19,16 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var mode: MultiplayerMode = .duel
     private var lang: String = "EN"
     
+    private func getPlayerId() -> String {
+        if let id = playerId {
+            return id
+        }
+        let newId = UUID().uuidString
+        self.playerId = newId
+        print("🙋‍♂️ Сгенерирован новый playerId: \(newId)")
+        return newId
+    }
+
     private override init() {
         super.init()
         let config = URLSessionConfiguration.default
@@ -82,6 +93,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         let msg: [String: Any] = [
             "type": "JOIN_MULTI",
             "gameId": gameId,
+            "playerId": getPlayerId(),
             "name": name.isEmpty ? NSNull() : name,
             "image": avatarData?.base64EncodedString() ?? NSNull()
         ]
@@ -108,7 +120,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if let gameIdToRejoin = self.rejoinGameId {
                 print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")
-                self.joinMulti(gameId: gameIdToRejoin)
+                self.sendReconnect(gameId: gameIdToRejoin)
                 self.rejoinGameId = nil
             } else {
                 self.sendFindOrCreate()
@@ -132,12 +144,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         var msgDict: [String: Any]
         let nameValue: Any = name.isEmpty ? NSNull() : name
         let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
+        let playerId = getPlayerId()
         
         switch mode {
         case .duel:
-            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue]
+            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": playerId]
         case .friends:
-            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue]
+            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": playerId]
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -157,6 +170,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         send(json: msgDict)
     }
     
+    func sendReconnect(gameId: String) {
+        guard isConnected else { return }
+        let msg: [String: Any] = [
+            "type": "RECONNECT",
+            "gameId": gameId,
+            "playerId": getPlayerId()
+        ]
+        print("📤 Отправляем RECONNECT:", msg)
+        send(json: msg)
+    }
+
     public func send(json: [String: Any]) {
         guard isConnected, let webSocketTask = webSocketTask else { return }
         guard let data = try? JSONSerialization.data(withJSONObject: json),
@@ -302,6 +326,33 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.delegate?.didReceiveCoopGameOver(result: result, word: word, wordLength: wordLength)
                 }
                 
+            case "RESTORED":
+                struct RestoredPayload: Decodable {
+                    let gameId: String
+                    let wordLength: Int
+                    let maskedWord: String
+                    let attemptsLeft: Int
+                    let guessed: [String]
+                    let players: [Player]
+                }
+
+                do {
+                    let payload = try JSONDecoder().decode(RestoredPayload.self, from: data)
+                    print("✅ RESTORED, gameId: \(payload.gameId)")
+                    self.currentGameId = payload.gameId
+                    self.delegate?.didRestoreGame(
+                        gameId: payload.gameId,
+                        wordLength: payload.wordLength,
+                        maskedWord: payload.maskedWord,
+                        attemptsLeft: payload.attemptsLeft,
+                        guessed: Set(payload.guessed),
+                        players: payload.players
+                    )
+                } catch {
+                    print("❌ Ошибка декодирования RESTORED:", error)
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
+                }
+
             case "ERROR":
                 if let msg = json["msg"] as? String {
                     self.delegate?.didReceiveError(msg)
