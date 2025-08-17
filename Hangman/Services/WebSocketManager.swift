@@ -11,7 +11,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var urlSession: URLSession!
     private(set) var currentGameId: String?
     private var rejoinGameId: String?
-    private var playerId: String?
+    @AppStorage("playerId") private var playerId: String?
     weak var delegate: WebSocketManagerDelegate?
     
     private var isConnected = false
@@ -19,16 +19,6 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var mode: MultiplayerMode = .duel
     private var lang: String = "EN"
     
-    private func getPlayerId() -> String {
-        if let id = playerId {
-            return id
-        }
-        let newId = UUID().uuidString
-        self.playerId = newId
-        print("🙋‍♂️ Сгенерирован новый playerId: \(newId)")
-        return newId
-    }
-
     private override init() {
         super.init()
         let config = URLSessionConfiguration.default
@@ -58,6 +48,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     func connect(mode: MultiplayerMode, language: String) {
         self.mode = mode
         self.lang = language
+
+        if rejoinGameId == nil {
+            self.playerId = UUID().uuidString
+            print("🙋‍♂️ Сгенерирован новый playerId для новой игры: \(self.playerId ?? "none")")
+        }
 
         if isConnected {
             print("ℹ️ WebSocket уже подключен, отправляем новый запрос на поиск игры.")
@@ -93,7 +88,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         let msg: [String: Any] = [
             "type": "JOIN_MULTI",
             "gameId": gameId,
-            "playerId": getPlayerId(),
+            "playerId": self.playerId ?? NSNull(),
             "name": name.isEmpty ? NSNull() : name,
             "image": avatarData?.base64EncodedString() ?? NSNull()
         ]
@@ -144,13 +139,12 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         var msgDict: [String: Any]
         let nameValue: Any = name.isEmpty ? NSNull() : name
         let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
-        let playerId = getPlayerId()
         
         switch mode {
         case .duel:
-            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": playerId]
+            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": self.playerId ?? NSNull()]
         case .friends:
-            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": playerId]
+            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": self.playerId ?? NSNull()]
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -175,7 +169,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         let msg: [String: Any] = [
             "type": "RECONNECT",
             "gameId": gameId,
-            "playerId": getPlayerId()
+            "playerId": self.playerId ?? NSNull()
         ]
         print("📤 Отправляем RECONNECT:", msg)
         send(json: msg)
@@ -316,6 +310,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                    let word = json["word"] as? String {
                     print("✅ Игра завершилась, result:", result)
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
+                    self.playerId = nil
+                    self.currentGameId = nil
                 }
                 
             case "GAME_OVER_COOP":
