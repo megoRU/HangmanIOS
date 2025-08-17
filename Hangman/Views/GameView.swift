@@ -4,12 +4,14 @@ struct GameView: View {
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("gameCategory") private var selectedCategory = ""
     
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var manager = StatsManager.shared
 
     @State private var wordToGuess: String = ""
     @State private var guessedLetters: [Character] = []
     @State private var attemptsLeft = 8
     @State private var isLoading = true
+    @State private var showErrorAlert = false
     
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
     
@@ -94,6 +96,14 @@ struct GameView: View {
                 loadWord()
             }
         }
+        .alert("Ошибка загрузки", isPresented: $showErrorAlert) {
+            Button("Повторить", action: loadWord)
+            Button("Назад") {
+                dismiss()
+            }
+        } message: {
+            Text("Не удалось загрузить слово. Проверьте интернет-соединение и попробуйте снова.")
+        }
     }
     
     private func chooseLetter(_ letter: Character) {
@@ -115,15 +125,16 @@ struct GameView: View {
     
     private func loadWord() {
         isLoading = true
+        showErrorAlert = false
         WordService.shared.fetchWord(language: selectedLanguage, category: selectedCategory.isEmpty ? nil : selectedCategory) { result in
             DispatchQueue.main.async {
                 switch result {
                 case .success(let word):
                     self.wordToGuess = word
+                    self.isLoading = false
                 case .failure:
-                    self.wordToGuess = "ERROR"
+                    self.showErrorAlert = true
                 }
-                self.isLoading = false
             }
         }
     }
