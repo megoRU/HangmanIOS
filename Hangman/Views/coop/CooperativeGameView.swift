@@ -226,7 +226,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var players: [Player] = []
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    private var webSocketManager = WebSocketManager()
+    private var webSocketManager = WebSocketManager.shared
     private(set) var currentGameId: String?
     private var mode: MultiplayerMode = .friends
 
