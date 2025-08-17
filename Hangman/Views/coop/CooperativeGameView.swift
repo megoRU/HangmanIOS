@@ -389,4 +389,26 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.players = players
         self.playerCount = players.count
     }
+
+    func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
+        print("✅ Игра восстановлена: \(gameId)")
+        self.currentGameId = gameId
+        if self.mode != .duel {
+            self.createdGameId = gameId
+        }
+        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
+        self.attemptsLeft = attemptsLeft
+        self.guessedLetters = Set(guessed.map { Character($0) })
+        self.players = players
+        self.playerCount = players.count
+
+        if self.mode != .duel && self.playerCount < 2 {
+            self.statusText = "Ожидаем друга..."
+        } else {
+            self.statusText = "Игра восстановлена"
+        }
+
+        self.gameOver = false
+        self.showDisconnectedAlert = false
+    }
 }
