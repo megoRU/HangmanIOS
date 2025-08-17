@@ -268,4 +268,16 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
         // Not used in competitive
     }
+
+    func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
+        print("✅ Соревновательная игра восстановлена: \(gameId)")
+        self.currentGameId = gameId
+        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
+        self.attemptsLeft = attemptsLeft
+        self.guessedLetters = Set(guessed.map { Character($0) })
+        self.players = players
+        self.playerCount = players.count
+        self.statusText = "Игра восстановлена"
+        self.gameOver = false
+    }
 }
