@@ -70,16 +70,6 @@ struct CooperativeGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
-        .alert("Потеряно соединение", isPresented: $viewModel.showDisconnectedAlert) {
-            Button("Создать игру заново") {
-                viewModel.startNewGame()
-            }
-            Button("Выйти") {
-                dismiss()
-            }
-        } message: {
-            Text("Соединение с сервером было разорвано. Вероятно, приложение было свернуто.")
-        }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
@@ -234,7 +224,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
     @Published var players: [Player] = []
-    @Published var showDisconnectedAlert = false
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager.shared
@@ -278,21 +267,16 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func startNewGame() {
         resetGame()
-        connect(mode: .friends, language: selectedLanguage)
     }
     
     func resetGame() {
         attemptsLeft = 8
         guessedLetters.removeAll()
-        statusText = "Подключение..."
+        statusText = "Игра началась"
         gameOver = false
         gameOverMessage = ""
         opponentLeftAlert = false
         shouldExitGame = false
-        createdGameId = nil
-        currentGameId = nil
-        players.removeAll()
-        playerCount = 0
     }
     
     // MARK: - WebSocketManagerDelegate
@@ -349,6 +333,27 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.shouldExitGame = true
     }
     
+    func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
+            print("✅ Игра восстановлена: \(gameId)")
+            self.currentGameId = gameId
+            if self.mode != .duel {
+                self.createdGameId = gameId
+            }
+            self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
+            self.attemptsLeft = attemptsLeft
+            self.guessedLetters = Set(guessed.map { Character($0) })
+            self.players = players
+            self.playerCount = players.count
+
+            if self.mode != .duel && self.playerCount < 2 {
+                self.statusText = "Ожидаем друга..."
+            } else {
+                self.statusText = "Игра восстановлена"
+            }
+
+            self.gameOver = false
+        }
+    
     func didReceivePlayerLeft(name: String) {
         playerCount -= 1
         players.removeAll { $0.name == name }
@@ -361,15 +366,10 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceiveError(_ message: String) {
-        if message.lowercased().contains("не найдена") {
-            print("❌ Переподключение не удалось, показываем алерт.")
-            showDisconnectedAlert = true
-        } else {
-            let localState = statusText
-            statusText = "Ошибка: \(message)"
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                self.statusText = localState
-            }
+        let localState = statusText
+        statusText = "Ошибка: \(message)"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.statusText = localState
         }
     }
     
@@ -388,27 +388,5 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         opponentLeftAlert = false
         self.players = players
         self.playerCount = players.count
-    }
-
-    func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
-        print("✅ Игра восстановлена: \(gameId)")
-        self.currentGameId = gameId
-        if self.mode != .duel {
-            self.createdGameId = gameId
-        }
-        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
-        self.attemptsLeft = attemptsLeft
-        self.guessedLetters = Set(guessed.map { Character($0) })
-        self.players = players
-        self.playerCount = players.count
-
-        if self.mode != .duel && self.playerCount < 2 {
-            self.statusText = "Ожидаем друга..."
-        } else {
-            self.statusText = "Игра восстановлена"
-        }
-
-        self.gameOver = false
-        self.showDisconnectedAlert = false
     }
 }
