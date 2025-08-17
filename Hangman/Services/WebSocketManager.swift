@@ -24,19 +24,16 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     func connect(mode: MultiplayerMode, language: String) {
+        self.mode = mode
+        self.lang = language
+
         if isConnected {
-            print("ℹ️ WebSocket уже подключен.")
-            if self.mode != mode || self.lang != language {
-                self.mode = mode
-                self.lang = language
-                sendFindOrCreate()
-            }
+            print("ℹ️ WebSocket уже подключен, отправляем новый запрос на поиск игры.")
+            sendFindOrCreate()
             return
         }
 
-        self.mode = mode
-        self.lang = language
-        
+        print("🔌 WebSocket подключается...")
         guard let url = URL(string: "wss://hangman.megoru.ru/ws") else {
             delegate?.didReceiveError("Неверный URL WebSocket")
             return
