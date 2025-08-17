@@ -70,6 +70,16 @@ struct CooperativeGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
+        .alert("Потеряно соединение", isPresented: $viewModel.showDisconnectedAlert) {
+            Button("Создать игру заново") {
+                viewModel.startNewGame()
+            }
+            Button("Выйти") {
+                dismiss()
+            }
+        } message: {
+            Text("Соединение с сервером было разорвано. Вероятно, приложение было свернуто.")
+        }
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
@@ -224,6 +234,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var createdGameId: String? = nil
     @Published var playerCount = 0
     @Published var players: [Player] = []
+    @Published var showDisconnectedAlert = false
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     private var webSocketManager = WebSocketManager.shared
@@ -267,16 +278,21 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func startNewGame() {
         resetGame()
+        connect(mode: .friends, language: selectedLanguage)
     }
     
     func resetGame() {
         attemptsLeft = 8
         guessedLetters.removeAll()
-        statusText = "Игра началась"
+        statusText = "Подключение..."
         gameOver = false
         gameOverMessage = ""
         opponentLeftAlert = false
         shouldExitGame = false
+        createdGameId = nil
+        currentGameId = nil
+        players.removeAll()
+        playerCount = 0
     }
     
     // MARK: - WebSocketManagerDelegate
@@ -345,10 +361,15 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func didReceiveError(_ message: String) {
-        let localState = statusText
-        statusText = "Ошибка: \(message)"
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.statusText = localState
+        if message.lowercased().contains("не найдена") {
+            print("❌ Переподключение не удалось, показываем алерт.")
+            showDisconnectedAlert = true
+        } else {
+            let localState = statusText
+            statusText = "Ошибка: \(message)"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                self.statusText = localState
+            }
         }
     }
     
