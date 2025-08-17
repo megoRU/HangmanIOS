@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 
 final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
+    static let shared = WebSocketManager()
+
     @AppStorage("name") private var name: String = ""
     @AppStorage("avatarImage") private var avatarData: Data?
     
@@ -15,13 +17,23 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var mode: MultiplayerMode = .duel
     private var lang: String = "EN"
     
-    override init() {
+    private override init() {
         super.init()
         let config = URLSessionConfiguration.default
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
     }
     
     func connect(mode: MultiplayerMode, language: String) {
+        if isConnected {
+            print("ℹ️ WebSocket уже подключен.")
+            if self.mode != mode || self.lang != language {
+                self.mode = mode
+                self.lang = language
+                sendFindOrCreate()
+            }
+            return
+        }
+
         self.mode = mode
         self.lang = language
         
@@ -36,8 +48,15 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     func disconnect() {
+        guard isConnected else {
+            print("ℹ️ WebSocket уже отключен.")
+            return
+        }
+        print("🔌 WebSocket отключается.")
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         isConnected = false
+        webSocketTask = nil
+        delegate = nil
     }
     
     func joinMulti(gameId: String) {
@@ -75,6 +94,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         isConnected = false
+        self.webSocketTask = nil
+        print("❌ WebSocket отключен, код: \(closeCode.rawValue)")
     }
     
     // MARK: Sending messages
