@@ -241,8 +241,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.currentGameId = payload.gameId
                     self.delegate?.didFindMatch(wordLength: payload.wordLength, players: payload.players)
                 } catch {
-                    print("❌ Ошибка декодирования MATCH_FOUND:", error)
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
+                    print("❌ Ошибка декодирования MATCH_FOUND:", error.localizedDescription)
+                    if let decodingError = error as? DecodingError {
+                        print("❌ Детали ошибки декодирования: \(decodingError)")
+                    }
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
                 
                 
@@ -293,8 +296,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         guessed: Set(payload.guessed)
                     )
                 } catch {
-                    print("❌ Ошибка декодирования PLAYER_JOINED:", error)
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
+                    print("❌ Ошибка декодирования PLAYER_JOINED:", error.localizedDescription)
+                    if let decodingError = error as? DecodingError {
+                        print("❌ Детали ошибки декодирования: \(decodingError)")
+                    }
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
                 
             case "PLAYER_LEFT":
@@ -345,8 +351,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         players: payload.players
                     )
                 } catch {
-                    print("❌ Ошибка декодирования RESTORED:", error)
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера.")
+                    print("❌ Ошибка декодирования RESTORED:", error.localizedDescription)
+                    if let decodingError = error as? DecodingError {
+                        print("❌ Детали ошибки декодирования: \(decodingError)")
+                    }
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
 
             case "ERROR":
