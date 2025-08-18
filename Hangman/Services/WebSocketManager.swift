@@ -9,7 +9,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     private var webSocketTask: URLSessionWebSocketTask?
     private var urlSession: URLSession!
-    private(set) var currentGameId: String?
+    @AppStorage("currentGameId") private var currentGameId: String?
     private var rejoinGameId: String?
     @AppStorage("playerId") private var playerId: String?
     weak var delegate: WebSocketManagerDelegate?
