@@ -7,7 +7,7 @@
 
 protocol WebSocketManagerDelegate: AnyObject {
     func didReceiveWaiting()
-    func didFindMatch(wordLength: Int, players: [Player])
+    func didFindMatch(gameId: String, wordLength: Int, players: [Player])
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?)
     func didReceiveGameOver(win: Bool, word: String)
     func didReceivePlayerLeft(name: String)
@@ -15,7 +15,7 @@ protocol WebSocketManagerDelegate: AnyObject {
     func didReceiveWaitingFriend()
     func didCreateRoom(gameId: String)
     func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>)
-    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int)
+    func didReceiveCoopGameOver(result: String, word: String, attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>)
     func didReceiveGameCanceled(word: String)
     func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player])
 }

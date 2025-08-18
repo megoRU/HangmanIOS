@@ -80,7 +80,7 @@ struct CompetitiveGameView: View {
             else if viewModel.statusText == "Ожидание соперника..." {
                 waitingView
             } else if viewModel.maskedWord != "" {
-                Image(String(8 - viewModel.attemptsLeft))
+                Image(String(min(8, max(0, 8 - viewModel.attemptsLeft))))
                     .resizable()
                     .padding(.top, -50)
 
@@ -206,14 +206,14 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         // This should not be called in duel mode
     }
 
-    func didFindMatch(wordLength: Int, players: [Player]) {
+    func didFindMatch(gameId: String, wordLength: Int, players: [Player]) {
         statusText = "Игра началась!"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
         guessedLetters.removeAll()
         gameOver = false
         opponentLeftAlert = false
-        currentGameId = webSocketManager.currentGameId
+        currentGameId = gameId
         self.players = players
         self.playerCount = players.count
     }
@@ -265,8 +265,8 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         // Not used in competitive
     }
 
-    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
-        // Not used in competitive
+    func didReceiveCoopGameOver(result: String, word: String, attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
+        // This should not be called in competitive mode
     }
 
     func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
