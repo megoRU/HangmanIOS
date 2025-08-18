@@ -173,7 +173,7 @@ struct CooperativeGameView: View {
                     .disabled(gameId == buttonText)
                 }
             } else {
-                Image(String(8 - viewModel.attemptsLeft))
+                Image(String(min(8, max(0, 8 - viewModel.attemptsLeft))))
                     .resizable()
                     .padding(.top, -50)
                 
@@ -270,11 +270,11 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
     
     func resetGame() {
-        attemptsLeft = 8
-        guessedLetters.removeAll()
-        statusText = "Игра началась"
+        // The game state is already reset by didReceiveCoopGameOver.
+        // This function is now just for dismissing the alert and resetting UI state.
         gameOver = false
         gameOverMessage = ""
+        statusText = "Игра началась"
         opponentLeftAlert = false
         shouldExitGame = false
     }
@@ -318,12 +318,19 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         manager.addStat(mode: .cooperative, result: win ? GameResult.win : GameResult.lose)
     }
     
-    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
+    func didReceiveCoopGameOver(result: String, word: String, attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
         self.gameOver = true
         self.gameOverMessage = (result == "WIN" ? "Вы победили!" : "Вы проиграли!") + "\nСлово: \(word)"
         self.statusText = "Игра окончена"
+
+        // Reset the state for the NEXT round using data from the server
         self.maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
-    
+        self.attemptsLeft = attemptsLeft
+        self.guessedLetters = guessed
+        self.players = players
+        self.playerCount = players.count
+        self.currentGameId = gameId
+
         manager.addStat(mode: .cooperative, result: result == "WIN" ? GameResult.win : GameResult.lose)
     }
     

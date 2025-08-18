@@ -80,7 +80,7 @@ struct CompetitiveGameView: View {
             else if viewModel.statusText == "Ожидание соперника..." {
                 waitingView
             } else if viewModel.maskedWord != "" {
-                Image(String(8 - viewModel.attemptsLeft))
+                Image(String(min(8, max(0, 8 - viewModel.attemptsLeft))))
                     .resizable()
                     .padding(.top, -50)
 

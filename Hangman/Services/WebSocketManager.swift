@@ -321,13 +321,37 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 }
                 
             case "GAME_OVER_COOP":
-                if let result = json["result"] as? String,
-                   let word = json["word"] as? String,
-                   let wordLength = json["wordLength"] as? Int {
-                    print("✅ Совместная игра завершилась, result:", result)
-                    self.delegate?.didReceiveCoopGameOver(result: result, word: word, wordLength: wordLength)
+                struct CoopGameOverPayload: Decodable {
+                    let result: String
+                    let word: String
+                    let attemptsLeft: Int
+                    let wordLength: Int
+                    let players: [Player]
+                    let gameId: String
+                    let guessed: [String]
                 }
-                
+
+                do {
+                    let payload = try JSONDecoder().decode(CoopGameOverPayload.self, from: data)
+                    print("✅ Совместная игра завершилась, result:", payload.result)
+                    self.currentGameId = payload.gameId
+                    self.delegate?.didReceiveCoopGameOver(
+                        result: payload.result,
+                        word: payload.word,
+                        attemptsLeft: payload.attemptsLeft,
+                        wordLength: payload.wordLength,
+                        players: payload.players,
+                        gameId: payload.gameId,
+                        guessed: Set(payload.guessed)
+                    )
+                } catch {
+                    print("❌ Ошибка декодирования GAME_OVER_COOP:", error.localizedDescription)
+                    if let decodingError = error as? DecodingError {
+                        print("❌ Детали ошибки декодирования: \(decodingError)")
+                    }
+                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
+                }
+
             case "RESTORED":
                 struct RestoredPayload: Decodable {
                     let gameId: String
