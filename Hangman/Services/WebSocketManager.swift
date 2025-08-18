@@ -239,7 +239,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let payload = try JSONDecoder().decode(MatchFoundPayload.self, from: data)
                     print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
                     self.currentGameId = payload.gameId
-                    self.delegate?.didFindMatch(wordLength: payload.wordLength, players: payload.players)
+                    self.delegate?.didFindMatch(gameId: payload.gameId, wordLength: payload.wordLength, players: payload.players)
                 } catch {
                     print("❌ Ошибка декодирования MATCH_FOUND:", error.localizedDescription)
                     if let decodingError = error as? DecodingError {

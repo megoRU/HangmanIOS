@@ -289,14 +289,14 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         statusText = "Ожидаем друга..."
     }
     
-    func didFindMatch(wordLength: Int, players: [Player]) {
+    func didFindMatch(gameId: String, wordLength: Int, players: [Player]) {
         statusText = "Игра началась!"
         maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         attemptsLeft = 8
         guessedLetters.removeAll()
         gameOver = false
         opponentLeftAlert = false
-        currentGameId = webSocketManager.currentGameId
+        currentGameId = gameId
         self.players = players
         self.playerCount = players.count
     }
