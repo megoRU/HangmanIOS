@@ -265,8 +265,8 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         // Not used in competitive
     }
 
-    func didReceiveCoopGameOver(result: String, word: String, wordLength: Int) {
-        // Not used in competitive
+    func didReceiveCoopGameOver(result: String, word: String, attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
+        // This should not be called in competitive mode
     }
 
     func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {

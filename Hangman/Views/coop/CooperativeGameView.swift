@@ -326,7 +326,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         // Reset the state for the NEXT round using data from the server
         self.maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
         self.attemptsLeft = attemptsLeft
-        self.guessedLetters = guessed
+        self.guessedLetters = Set(guessed.map { Character($0) })
         self.players = players
         self.playerCount = players.count
         self.currentGameId = gameId
