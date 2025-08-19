@@ -40,6 +40,11 @@ struct CompetitiveGameView: View {
             } message: {
                 Text(viewModel.gameOverMessage)
             }
+            .alert("Ошибка", isPresented: $viewModel.showErrorAlert, actions: {
+                Button("OK", role: .cancel) { }
+            }, message: {
+                Text(viewModel.errorMessage ?? "Неизвестная ошибка")
+            })
             .onAppear {
                 print("🔌 onConnect:", selectedLanguage)
                 viewModel.connect(language: selectedLanguage)
@@ -135,6 +140,8 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var statusText = "Подключение..."
     @Published var gameOver = false
     @Published var gameOverMessage = ""
+    @Published var errorMessage: String?
+    @Published var showErrorAlert = false
     @Published var opponentLeftAlert = false
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
@@ -162,6 +169,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     func leaveGame() {
         print("🔌 leaveGame вызван: " + (currentGameId ?? ""))
         webSocketManager.leaveGame(gameId: currentGameId)
+        webSocketManager.clearGameStale()
     }
 
     func disconnect() {
@@ -249,7 +257,15 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     }
 
     func didReceiveError(_ message: String) {
-        statusText = "Ошибка: \(message)"
+        print("🔴 Получена ошибка от сервера: \(message)")
+
+        if message.contains("декодирования") {
+            self.errorMessage = "Ошибка обработки данных с сервера. Детали в консоли."
+        } else {
+            self.errorMessage = message
+        }
+
+        self.showErrorAlert = true
     }
 
     func didCreateRoom(gameId: String) {
