@@ -12,6 +12,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     @AppStorage("currentGameId") private var currentGameId: String?
     private var rejoinGameId: String?
     @AppStorage("playerId") private var playerId: String?
+    private var disconnectionTime: Date?
     weak var delegate: WebSocketManagerDelegate?
     
     private var isConnected = false
@@ -38,10 +39,29 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
 
     @objc private func appDidBecomeActive() {
         print("☀️ Приложение стало активным.")
+        // Если есть игра, но мы не подключены
         if !isConnected && currentGameId != nil {
-            print("🔌 Соединение было разорвано, пытаемся переподключиться...")
-            rejoinGameId = currentGameId
-            connect(mode: self.mode, language: self.lang)
+            // Проверяем, было ли зафиксировано время разрыва соединения
+            if let disconnectionTime = self.disconnectionTime {
+                let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
+
+                if timeSinceDisconnection <= 30 {
+                    print("🔌 Соединение было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
+                    rejoinGameId = currentGameId
+                    connect(mode: self.mode, language: self.lang)
+                } else {
+                    print("🔌 Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
+                    clearGameStale()
+                }
+                // Сбрасываем таймер после попытки
+                self.disconnectionTime = nil
+            } else {
+                // Если время разрыва неизвестно (например, приложение было выгружено),
+                // все равно пробуем переподключиться, как и раньше.
+                print("🔌 Соединение было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
+                rejoinGameId = currentGameId
+                connect(mode: self.mode, language: self.lang)
+            }
         }
     }
     
@@ -106,6 +126,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         print("🔌 Отправка LEAVE_GAME: \(msg)")
         send(json: msg)
     }
+
+    /// Очистить gameId и playerId, когда пользователь покидает игру
+    func clearGameStale() {
+        print("🗑️ Очистка состояния игры: gameId и playerId")
+        self.currentGameId = nil
+        self.playerId = nil
+    }
     
     // MARK: URLSessionWebSocketDelegate
     
@@ -126,7 +153,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         isConnected = false
         self.webSocketTask = nil
-        print("❌ WebSocket отключен, код: \(closeCode.rawValue)")
+        // Мы устанавливаем время разрыва только если это не было преднамеренное закрытие.
+        // .goingAway отправляется при вызове webSocketTask.cancel()
+        if closeCode != .goingAway && self.currentGameId != nil {
+            print("❌ WebSocket отключен непреднамеренно, код: \(closeCode.rawValue). Запускаем 30-секундный таймер на переподключение.")
+            self.disconnectionTime = Date()
+        } else {
+            print("❌ WebSocket отключен штатно.")
+        }
     }
     
     // MARK: Sending messages

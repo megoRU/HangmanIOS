@@ -70,6 +70,11 @@ struct CooperativeGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
+        .alert("Ошибка", isPresented: $viewModel.showErrorAlert, actions: {
+            Button("OK", role: .cancel) { }
+        }, message: {
+            Text(viewModel.errorMessage ?? "Неизвестная ошибка")
+        })
         .onAppear {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
@@ -219,6 +224,8 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     @Published var statusText = "Подключение..."
     @Published var gameOver = false
     @Published var gameOverMessage = ""
+    @Published var errorMessage: String?
+    @Published var showErrorAlert = false
     @Published var opponentLeftAlert = false
     @Published var shouldExitGame = false
     @Published var createdGameId: String? = nil
@@ -252,6 +259,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     func leaveGame() {
         print("🔌 leaveGame вызван: " + (createdGameId ?? ""))
         webSocketManager.leaveGame(gameId: currentGameId)
+        webSocketManager.clearGameStale()
     }
     
     func disconnect() {
@@ -365,19 +373,27 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         playerCount -= 1
         players.removeAll { $0.name == name }
 
-        let localState = statusText
+        let oldStatus = self.statusText
         statusText = "Игрок \(name) вышел"
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.statusText = localState
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            if self.playerCount < 2 {
+                self.statusText = "Ожидаем друга..."
+            } else {
+                self.statusText = oldStatus
+            }
         }
     }
     
     func didReceiveError(_ message: String) {
-        let localState = statusText
-        statusText = "Ошибка: \(message)"
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.statusText = localState
+        print("🔴 Получена ошибка от сервера: \(message)")
+
+        if message.contains("декодирования") {
+            self.errorMessage = "Ошибка обработки данных с сервера. Детали в консоли."
+        } else {
+            self.errorMessage = message
         }
+
+        self.showErrorAlert = true
     }
     
     func didCreateRoom(gameId: String) {
