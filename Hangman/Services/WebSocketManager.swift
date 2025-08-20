@@ -4,27 +4,26 @@ import SwiftUI
 final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     static let shared = WebSocketManager()
 
-    @AppStorage("name") private var name: String = ""
+    @AppStorage("name") private var name: String = "noname"
     @AppStorage("avatarImage") private var avatarData: Data?
-    
-    private var webSocketTask: URLSessionWebSocketTask?
-    private var urlSession: URLSession!
-    @AppStorage("currentGameId") private var currentGameId: String?
-    private var rejoinGameId: String?
+    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     @AppStorage("playerId") private var playerId: String?
+    @AppStorage("currentGameId") private var currentGameId: String?
+
+    var webSocketTask: URLSessionWebSocketTask?
+
+    private var urlSession: URLSession!
+    private var rejoinGameId: String?
     private var disconnectionTime: Date?
-    weak var delegate: WebSocketManagerDelegate?
-    
     private var isConnected = false
-    
-    private var mode: MultiplayerMode = .duel
-    private var lang: String = "EN"
+
+    weak var delegate: WebSocketManagerDelegate?
     
     private override init() {
         super.init()
         let config = URLSessionConfiguration.default
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
-
+        
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
@@ -39,44 +38,29 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
 
     @objc private func appDidBecomeActive() {
         print("☀️ Приложение стало активным.")
-        // Если есть игра, но мы не подключены
         if !isConnected && currentGameId != nil {
-            // Проверяем, было ли зафиксировано время разрыва соединения
             if let disconnectionTime = self.disconnectionTime {
                 let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
-
                 if timeSinceDisconnection <= 30 {
                     print("🔌 Соединение было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
                     rejoinGameId = currentGameId
-                    connect(mode: self.mode, language: self.lang)
+                    connect()
                 } else {
                     print("🔌 Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
                     clearGameStale()
                 }
-                // Сбрасываем таймер после попытки
                 self.disconnectionTime = nil
             } else {
-                // Если время разрыва неизвестно (например, приложение было выгружено),
-                // все равно пробуем переподключиться, как и раньше.
                 print("🔌 Соединение было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
                 rejoinGameId = currentGameId
-                connect(mode: self.mode, language: self.lang)
+                connect()
             }
         }
     }
     
-    func connect(mode: MultiplayerMode, language: String) {
-        self.mode = mode
-        self.lang = language
-
-        if rejoinGameId == nil {
-            self.playerId = UUID().uuidString
-            print("🙋‍♂️ Сгенерирован новый playerId для новой игры: \(self.playerId ?? "none")")
-        }
-
+    func connect() {
         if isConnected {
-            print("ℹ️ WebSocket уже подключен, отправляем новый запрос на поиск игры.")
-            sendFindOrCreate()
+            print("ℹ️ Уже подключены к WebSocket")
             return
         }
 
@@ -90,7 +74,21 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         webSocketTask?.resume()
         listen()
     }
-    
+
+    func findGame(mode: MultiplayerMode, playerId: String) {
+        self.playerId = playerId
+        
+        sendFindOrCreate(mode: mode, playerId: playerId)
+    }
+
+    func reconnect(gameId: String) {
+        if let playerId = playerId {
+            sendReconnect(gameId: gameId, playerId: playerId)
+        } else {
+            print("ℹ️ PlayerId is nil RECONNECT невозможен!")
+        }
+    }
+
     func disconnect() {
         guard isConnected else {
             print("ℹ️ WebSocket уже отключен.")
@@ -108,7 +106,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         let msg: [String: Any] = [
             "type": "JOIN_MULTI",
             "gameId": gameId,
-            "playerId": self.playerId ?? NSNull(),
+            "playerId": playerId ?? NSNull(),
             "name": name.isEmpty ? NSNull() : name,
             "image": avatarData?.base64EncodedString() ?? NSNull()
         ]
@@ -116,7 +114,6 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         send(json: msg)
     }
     
-    /// Отправить на сервер команду выхода из игры
     func leaveGame(gameId: String?) {
         guard isConnected else { return }
         var msg: [String: Any] = ["type": "LEAVE_GAME"]
@@ -127,14 +124,13 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         send(json: msg)
     }
 
-    /// Очистить gameId и playerId, когда пользователь покидает игру
     func clearGameStale() {
         print("🗑️ Очистка состояния игры: gameId и playerId")
-        self.currentGameId = nil
-        self.playerId = nil
+        currentGameId = nil
+        playerId = nil
     }
     
-    // MARK: URLSessionWebSocketDelegate
+    // MARK: - URLSessionWebSocketDelegate
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         isConnected = true
@@ -142,43 +138,44 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if let gameIdToRejoin = self.rejoinGameId {
                 print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")
-                self.sendReconnect(gameId: gameIdToRejoin)
+                self.sendReconnect(gameId: gameIdToRejoin, playerId: self.playerId ?? NSNull())
                 self.rejoinGameId = nil
-            } else {
-                self.sendFindOrCreate()
             }
         }
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         isConnected = false
-        self.webSocketTask = nil
-        // Мы устанавливаем время разрыва только если это не было преднамеренное закрытие.
-        // .goingAway отправляется при вызове webSocketTask.cancel()
-        if closeCode != .goingAway && self.currentGameId != nil {
+        if closeCode != .goingAway && currentGameId != nil {
             print("❌ WebSocket отключен непреднамеренно, код: \(closeCode.rawValue). Запускаем 30-секундный таймер на переподключение.")
-            self.disconnectionTime = Date()
+            disconnectionTime = Date()
         } else {
             print("❌ WebSocket отключен штатно.")
         }
     }
     
-    // MARK: Sending messages
+    // MARK: - Sending messages
     
-    private func sendFindOrCreate() {
-        guard isConnected else {
-            print("⚠️ Не подключено, пропускаем FIND/CREATE")
-            return
-        }
+    private func sendFindOrCreate(mode: MultiplayerMode, playerId: String) {
         var msgDict: [String: Any]
         let nameValue: Any = name.isEmpty ? NSNull() : name
         let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
         
+        print("mode: \(mode)")
+        
         switch mode {
         case .duel:
-            msgDict = ["type": "FIND_GAME", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": self.playerId ?? NSNull()]
+            msgDict = ["type": "FIND_GAME",
+                       "lang": selectedLanguage.lowercased(),
+                       "name": nameValue,
+                       "image": imageValue,
+                       "playerId": playerId]
         case .friends:
-            msgDict = ["type": "CREATE_MULTI", "lang": lang.lowercased(), "name": nameValue, "image": imageValue, "playerId": self.playerId ?? NSNull()]
+            msgDict = ["type": "CREATE_MULTI",
+                       "lang": selectedLanguage.lowercased(),
+                       "name": nameValue,
+                       "image": imageValue,
+                       "playerId": playerId]
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -198,23 +195,22 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         send(json: msgDict)
     }
     
-    func sendReconnect(gameId: String) {
+    func sendReconnect(gameId: String, playerId: Any) {
         guard isConnected else { return }
         let msg: [String: Any] = [
             "type": "RECONNECT",
             "gameId": gameId,
-            "playerId": self.playerId ?? NSNull()
+            "playerId": playerId
         ]
         print("📤 Отправляем RECONNECT:", msg)
         send(json: msg)
     }
 
     public func send(json: [String: Any]) {
-        guard isConnected, let webSocketTask = webSocketTask else { return }
         guard let data = try? JSONSerialization.data(withJSONObject: json),
               let jsonString = String(data: data, encoding: .utf8) else { return }
         let message = URLSessionWebSocketTask.Message.string(jsonString)
-        webSocketTask.send(message) { error in
+        webSocketTask?.send(message) { error in
             if let error = error {
                 DispatchQueue.main.async {
                     self.delegate?.didReceiveError("Ошибка отправки: \(error.localizedDescription)")
@@ -223,7 +219,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         }
     }
     
-    // MARK: Receiving messages
+    // MARK: - Receiving messages
     
     private func listen() {
         webSocketTask?.receive { [weak self] result in
@@ -255,52 +251,40 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         guard let data = text.data(using: .utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let type = json["type"] as? String else { return }
-        
+
         DispatchQueue.main.async {
             switch type {
             case "WAITING":
                 print("✅ WAITING")
                 self.delegate?.didReceiveWaiting()
-                
+
             case "MATCH_FOUND":
                 struct MatchFoundPayload: Decodable {
                     let gameId: String
                     let wordLength: Int
                     let players: [Player]
                 }
-                
-                do {
-                    let payload = try JSONDecoder().decode(MatchFoundPayload.self, from: data)
+                self.decodePayload(MatchFoundPayload.self, data: data) { payload in
                     print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
                     self.currentGameId = payload.gameId
                     self.delegate?.didFindMatch(gameId: payload.gameId, wordLength: payload.wordLength, players: payload.players)
-                } catch {
-                    print("❌ Ошибка декодирования MATCH_FOUND:", error.localizedDescription)
-                    if let decodingError = error as? DecodingError {
-                        print("❌ Детали ошибки декодирования: \(decodingError)")
-                    }
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
-                
-                
+
             case "GAME_CANCELED":
                 if let word = json["word"] as? String {
                     print("✅ GAME_CANCELED, word:", word)
                     self.delegate?.didReceiveGameCanceled(word: word)
                 }
-                
+
             case "STATE_UPDATE":
                 if let maskedWord = json["maskedWord"] as? String,
                    let attemptsLeft = json["attemptsLeft"] as? Int {
                     print("✅ STATE_UPDATE, maskedWord:", maskedWord)
                     let duplicate = json["duplicate"] as? Bool ?? false
-                    var guessedSet: Set<String>? = nil
-                    if let guessed = json["guessed"] as? [String] {
-                        guessedSet = Set(guessed)
-                    }
+                    let guessedSet = (json["guessed"] as? [String]).map { Set($0) }
                     self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate, guessed: guessedSet)
                 }
-                
+
             case "ROOM_CREATED":
                 if let gameId = json["gameId"] as? String {
                     print("✅ Игра создана, gameId:", gameId)
@@ -308,7 +292,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.delegate?.didCreateRoom(gameId: gameId)
                     self.delegate?.didReceiveWaitingFriend()
                 }
-                
+
             case "PLAYER_JOINED":
                 struct PlayerJoinedPayload: Decodable {
                     let attemptsLeft: Int
@@ -317,9 +301,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let gameId: String
                     let guessed: [String]
                 }
-                
-                do {
-                    let payload = try JSONDecoder().decode(PlayerJoinedPayload.self, from: data)
+                self.decodePayload(PlayerJoinedPayload.self, data: data) { payload in
                     print("✅ PLAYER_JOINED, players:", payload.players.count)
                     self.currentGameId = payload.gameId
                     self.delegate?.didReceivePlayerJoined(
@@ -329,22 +311,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         gameId: payload.gameId,
                         guessed: Set(payload.guessed)
                     )
-                } catch {
-                    print("❌ Ошибка декодирования PLAYER_JOINED:", error.localizedDescription)
-                    if let decodingError = error as? DecodingError {
-                        print("❌ Детали ошибки декодирования: \(decodingError)")
-                    }
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
-                
+
             case "PLAYER_LEFT":
-                DispatchQueue.main.async {
-                    if let name = json["name"] as? String {
-                        print("✅ PLAYER_LEFT, name: \(name)")
-                        self.delegate?.didReceivePlayerLeft(name: name)
-                    }
+                if let name = json["name"] as? String {
+                    print("✅ PLAYER_LEFT, name:", name)
+                    self.delegate?.didReceivePlayerLeft(name: name)
                 }
-                
+
             case "GAME_OVER":
                 if let result = json["result"] as? String,
                    let word = json["word"] as? String {
@@ -353,7 +327,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.playerId = nil
                     self.currentGameId = nil
                 }
-                
+
             case "GAME_OVER_COOP":
                 struct CoopGameOverPayload: Decodable {
                     let result: String
@@ -364,9 +338,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let gameId: String
                     let guessed: [String]
                 }
-
-                do {
-                    let payload = try JSONDecoder().decode(CoopGameOverPayload.self, from: data)
+                self.decodePayload(CoopGameOverPayload.self, data: data) { payload in
                     print("✅ Совместная игра завершилась, result:", payload.result)
                     self.currentGameId = payload.gameId
                     self.delegate?.didReceiveCoopGameOver(
@@ -378,12 +350,6 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         gameId: payload.gameId,
                         guessed: Set(payload.guessed)
                     )
-                } catch {
-                    print("❌ Ошибка декодирования GAME_OVER_COOP:", error.localizedDescription)
-                    if let decodingError = error as? DecodingError {
-                        print("❌ Детали ошибки декодирования: \(decodingError)")
-                    }
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
 
             case "RESTORED":
@@ -395,10 +361,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     let guessed: [String]
                     let players: [Player]
                 }
-
-                do {
-                    let payload = try JSONDecoder().decode(RestoredPayload.self, from: data)
-                    print("✅ RESTORED, gameId: \(payload.gameId)")
+                self.decodePayload(RestoredPayload.self, data: data) { payload in
+                    print("✅ RESTORED, gameId:", payload.gameId)
                     self.currentGameId = payload.gameId
                     self.delegate?.didRestoreGame(
                         gameId: payload.gameId,
@@ -408,22 +372,30 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                         guessed: Set(payload.guessed),
                         players: payload.players
                     )
-                } catch {
-                    print("❌ Ошибка декодирования RESTORED:", error.localizedDescription)
-                    if let decodingError = error as? DecodingError {
-                        print("❌ Детали ошибки декодирования: \(decodingError)")
-                    }
-                    self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
                 }
 
             case "ERROR":
                 if let msg = json["msg"] as? String {
                     self.delegate?.didReceiveError(msg)
                 }
-                
+
             default:
                 break
             }
+        }
+    }
+
+    // Вспомогательная функция для декодирования payload
+    private func decodePayload<T: Decodable>(_ type: T.Type, data: Data, completion: (T) -> Void) {
+        do {
+            let payload = try JSONDecoder().decode(type, from: data)
+            completion(payload)
+        } catch {
+            print("❌ Ошибка декодирования \(type):", error.localizedDescription)
+            if let decodingError = error as? DecodingError {
+                print("❌ Детали ошибки декодирования:", decodingError)
+            }
+            self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
         }
     }
 }

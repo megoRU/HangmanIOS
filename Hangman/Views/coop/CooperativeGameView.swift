@@ -248,7 +248,8 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.mode = mode
         statusText = mode == .code_friend ? "Ожидание кода..." : "Подключение..."
         webSocketManager.delegate = self
-        webSocketManager.connect(mode: mode, language: language)
+        webSocketManager.connect()
+        webSocketManager.findGame(mode: mode, playerId: UUID().uuidString)
     }
     
     func joinMulti(gameId: String) {
@@ -411,5 +412,9 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         opponentLeftAlert = false
         self.players = players
         self.playerCount = players.count
+    }
+    
+    func didReceiveMatchFound(gameId: String?, playerId: String?) {
+    //
     }
 }

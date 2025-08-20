@@ -162,7 +162,8 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
     func connect(language: String) {
         statusText = "Подключение..."
         webSocketManager.delegate = self
-        webSocketManager.connect(mode: .duel, language: language)
+        webSocketManager.connect()
+        webSocketManager.findGame(mode: .duel, playerId: UUID().uuidString)
     }
 
     // MARK: - Выход и разрыв
@@ -295,5 +296,9 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.playerCount = players.count
         self.statusText = "Игра восстановлена"
         self.gameOver = false
+    }
+    
+    func didReceiveMatchFound(gameId: String?, playerId: String?) {
+    //
     }
 }
