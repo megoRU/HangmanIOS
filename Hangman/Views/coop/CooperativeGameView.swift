@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct CooperativeGameView: View {
     let mode: MultiplayerMode
@@ -212,9 +213,6 @@ struct CooperativeGameView: View {
     MainMenuView()
 }
 
-import Foundation
-import SwiftUI
-
 final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate {
     
     let manager = StatsManager.shared
@@ -308,6 +306,15 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         currentGameId = gameId
         self.players = players
         self.playerCount = players.count
+
+        let content = UNMutableNotificationContent()
+        content.title = "Игра найдена!"
+        content.body = "Соперник готов. Начинаем!"
+        content.sound = .default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request)
     }
     
     func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?) {
