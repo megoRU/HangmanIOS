@@ -115,7 +115,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     func leaveGame(gameId: String?) {
-        guard isConnected else { return }
+        guard isConnected, let ws = webSocketTask, ws.state == .running else {
+            print("⚠️ Нельзя отправить LEAVE_GAME, сокет закрыт")
+            return
+        }
         var msg: [String: Any] = ["type": "LEAVE_GAME"]
         if let gameId = gameId {
             msg["gameId"] = gameId
@@ -205,10 +208,16 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     public func send(json: [String: Any]) {
+        guard let webSocketTask,
+              webSocketTask.state == .running else {
+            print("⚠️ Попытка отправки, но сокет не в состоянии running")
+            return
+        }
         guard let data = try? JSONSerialization.data(withJSONObject: json),
               let jsonString = String(data: data, encoding: .utf8) else { return }
+
         let message = URLSessionWebSocketTask.Message.string(jsonString)
-        webSocketTask?.send(message) { error in
+        webSocketTask.send(message) { error in
             if let error = error {
                 DispatchQueue.main.async {
                     self.delegate?.didReceiveError("Ошибка отправки: \(error.localizedDescription)")
@@ -216,6 +225,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             }
         }
     }
+
     
     // MARK: - Receiving messages
     
