@@ -307,8 +307,4 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.statusText = "Игра восстановлена"
         self.gameOver = false
     }
-    
-    func didReceiveMatchFound(gameId: String?, playerId: String?) {
-    //
-    }
 }

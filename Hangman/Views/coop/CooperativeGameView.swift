@@ -420,8 +420,4 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.players = players
         self.playerCount = players.count
     }
-    
-    func didReceiveMatchFound(gameId: String?, playerId: String?) {
-    //
-    }
 }
