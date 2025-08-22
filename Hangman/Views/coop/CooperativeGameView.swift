@@ -408,6 +408,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func didCreateRoom(gameId: String) {
         self.createdGameId = gameId
+        self.currentGameId = gameId
         self.statusText = "Комната создана"
     }
     
