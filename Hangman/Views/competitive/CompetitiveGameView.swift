@@ -64,6 +64,12 @@ struct CompetitiveGameView: View {
             AnimatedDotsText(text: "Ожидание соперника")
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.gray)
+
+            Text("Чтобы не потерять соединение, не сворачивайте приложение более чем на 30 секунд.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.top, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(

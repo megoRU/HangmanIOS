@@ -16,6 +16,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var rejoinGameId: String?
     private var disconnectionTime: Date?
     private var isConnected = false
+    private var currentMode: MultiplayerMode?
+    private var wasSearchingCompetitive = false
     
     weak var delegate: WebSocketManagerDelegate?
     
@@ -30,14 +32,40 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
     }
     
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
     
+    @objc private func appWillResignActive() {
+        print("💤 Приложение уходит в фон.")
+        if self.wasSearchingCompetitive {
+            print("👋🏼 Игрок был в поиске соревновательной игры. Отправляем LEAVE_GAME.")
+            leaveGame(gameId: currentGameId)
+        }
+    }
+
     @objc private func appDidBecomeActive() {
         print("☀️ Приложение стало активным.")
+
+        if self.wasSearchingCompetitive {
+            print("🔁 Игрок вернулся после сворачивания во время поиска. Начинаем поиск заново.")
+            if !isConnected {
+                connect()
+            } else {
+                delegate?.webSocketDidConnect()
+            }
+            return
+        }
+
         if !isConnected && currentGameId != nil {
             if let disconnectionTime = self.disconnectionTime {
                 let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
@@ -48,6 +76,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 } else {
                     print("🔌 Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
                     clearGameStale()
+                    delegate?.didReceiveError("Время для переподключения истекло.")
                 }
                 self.disconnectionTime = nil
             } else {
@@ -80,6 +109,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func findGame(mode: MultiplayerMode, playerId: String) {
         self.playerId = playerId
+        self.currentMode = mode
+        if mode == .duel {
+            self.wasSearchingCompetitive = true
+        }
         
         sendFindOrCreate(mode: mode, playerId: playerId)
     }
@@ -131,9 +164,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     func clearGameStale() {
-        print("🗑️ Очистка состояния игры: gameId и playerId")
+        print("🗑️ Очистка состояния игры: gameId, playerId, mode")
         currentGameId = nil
         playerId = nil
+        currentMode = nil
+        wasSearchingCompetitive = false
     }
     
     // MARK: - URLSessionWebSocketDelegate
@@ -243,9 +278,15 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             switch result {
             case .failure(let error):
                 let nsError = error as NSError
-                // 57: ENOTCONN (Socket is not connected), 9: EBADF (Bad file descriptor)
-                if nsError.domain == NSPOSIXErrorDomain && (nsError.code == 57 || nsError.code == 9) {
-                    print("ℹ️ WebSocket receive loop ended (normal closure): \(error.localizedDescription)")
+                // 50: ENETDOWN, 54: ECONNRESET, 57: ENOTCONN, 60: ETIMEDOUT, 9: EBADF
+                let networkErrors = [50, 54, 57, 60, 9]
+
+                if nsError.domain == NSPOSIXErrorDomain && networkErrors.contains(nsError.code) {
+                    if self.currentGameId != nil {
+                         print("ℹ️ WebSocket receive loop failed during a game, likely due to network loss/backgrounding. Error: \(error.localizedDescription). Reconnect will be attempted on app activation.")
+                    } else {
+                        print("ℹ️ WebSocket receive loop ended (normal closure): \(error.localizedDescription)")
+                    }
                 } else {
                     DispatchQueue.main.async {
                         print("🔴 WebSocket receive error: \(error.localizedDescription)")
@@ -289,6 +330,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 self.decodePayload(MatchFoundPayload.self, data: data) { payload in
                     print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
                     self.currentGameId = payload.gameId
+                    self.wasSearchingCompetitive = false
                     self.delegate?.didFindMatch(gameId: payload.gameId, wordLength: payload.wordLength, players: payload.players)
                 }
                 
@@ -348,6 +390,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
                     self.playerId = nil
                     self.currentGameId = nil
+                    self.currentMode = nil
+                    self.wasSearchingCompetitive = false
                 }
                 
             case "GAME_OVER_COOP":
