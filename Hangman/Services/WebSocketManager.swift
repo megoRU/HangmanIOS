@@ -18,6 +18,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var isConnected = false
     private var currentMode: MultiplayerMode?
     private var wasSearchingCompetitive = false
+    private var isWaitingForCoopPartner = false
     
     weak var delegate: WebSocketManagerDelegate?
     
@@ -57,12 +58,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         print("☀️ Приложение стало активным.")
 
         if self.wasSearchingCompetitive {
-            print("🔁 Игрок вернулся после сворачивания во время поиска. Начинаем поиск заново.")
-            if !isConnected {
-                connect()
-            } else {
-                delegate?.webSocketDidConnect()
-            }
+            print("🔁 Игрок вернулся после сворачивания во время поиска соревновательной игры. Начинаем поиск заново.")
+            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
+            return
+        }
+
+        if self.isWaitingForCoopPartner {
+            print("🔁 Игрок вернулся в лобби ожидания друга. Создаем комнату заново.")
+            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
             return
         }
 
@@ -70,17 +73,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             if let disconnectionTime = self.disconnectionTime {
                 let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
                 if timeSinceDisconnection <= 30 {
-                    print("🔌 Соединение было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
+                    print("🔌 [RECONNECT] Соединение с активной игрой было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
                     rejoinGameId = currentGameId
                     connect()
                 } else {
-                    print("🔌 Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
+                    print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
                     clearGameStale()
                     delegate?.didReceiveError("Время для переподключения истекло.")
                 }
                 self.disconnectionTime = nil
             } else {
-                print("🔌 Соединение было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
+                print("🔌 [RECONNECT] Соединение с активной игрой было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
                 rejoinGameId = currentGameId
                 connect()
             }
@@ -169,6 +172,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         playerId = nil
         currentMode = nil
         wasSearchingCompetitive = false
+        isWaitingForCoopPartner = false
     }
     
     // MARK: - URLSessionWebSocketDelegate
@@ -331,6 +335,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
                     self.currentGameId = payload.gameId
                     self.wasSearchingCompetitive = false
+                    self.isWaitingForCoopPartner = false
                     self.delegate?.didFindMatch(gameId: payload.gameId, wordLength: payload.wordLength, players: payload.players)
                 }
                 
@@ -353,6 +358,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 if let gameId = json["gameId"] as? String {
                     print("✅ Игра создана, gameId:", gameId)
                     self.currentGameId = gameId
+                    self.isWaitingForCoopPartner = true
                     self.delegate?.didCreateRoom(gameId: gameId)
                     self.delegate?.didReceiveWaitingFriend()
                 }
@@ -368,6 +374,9 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 self.decodePayload(PlayerJoinedPayload.self, data: data) { payload in
                     print("✅ PLAYER_JOINED, players:", payload.players.count)
                     self.currentGameId = payload.gameId
+                    if payload.players.count >= 2 {
+                        self.isWaitingForCoopPartner = false
+                    }
                     self.delegate?.didReceivePlayerJoined(
                         attemptsLeft: payload.attemptsLeft,
                         wordLength: payload.wordLength,
@@ -392,6 +401,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     self.currentGameId = nil
                     self.currentMode = nil
                     self.wasSearchingCompetitive = false
+                    self.isWaitingForCoopPartner = false
                 }
                 
             case "GAME_OVER_COOP":
@@ -407,6 +417,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 self.decodePayload(CoopGameOverPayload.self, data: data) { payload in
                     print("✅ Совместная игра завершилась, result:", payload.result)
                     self.currentGameId = payload.gameId
+                    self.isWaitingForCoopPartner = false
                     self.delegate?.didReceiveCoopGameOver(
                         result: payload.result,
                         word: payload.word,
@@ -430,6 +441,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                 self.decodePayload(RestoredPayload.self, data: data) { payload in
                     print("✅ RESTORED, gameId:", payload.gameId)
                     self.currentGameId = payload.gameId
+                    if self.currentMode != .duel && payload.players.count < 2 {
+                        self.isWaitingForCoopPartner = true
+                    } else {
+                        self.isWaitingForCoopPartner = false
+                    }
                     self.delegate?.didRestoreGame(
                         gameId: payload.gameId,
                         wordLength: payload.wordLength,
