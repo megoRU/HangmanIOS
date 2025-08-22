@@ -64,17 +64,27 @@ struct StatisticsView: View {
                     
                     Chart {
                         ForEach(chartData, id: \.date) { item in
-                            BarMark(
+                            LineMark(
                                 x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.wins),
-                                width: .ratio(0.6)
+                                y: .value("Количество", item.wins)
                             )
                             .foregroundStyle(by: .value("Результат", "Победы"))
 
-                            BarMark(
+                            PointMark(
                                 x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.losses),
-                                width: .ratio(0.6)
+                                y: .value("Количество", item.wins)
+                            )
+                            .foregroundStyle(by: .value("Результат", "Победы"))
+
+                            LineMark(
+                                x: .value("Дата", item.date, unit: .day),
+                                y: .value("Количество", item.losses)
+                            )
+                            .foregroundStyle(by: .value("Результат", "Поражения"))
+
+                            PointMark(
+                                x: .value("Дата", item.date, unit: .day),
+                                y: .value("Количество", item.losses)
                             )
                             .foregroundStyle(by: .value("Результат", "Поражения"))
                         }
