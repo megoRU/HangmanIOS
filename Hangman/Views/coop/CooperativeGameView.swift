@@ -80,10 +80,6 @@ struct CooperativeGameView: View {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
         }
-        .onDisappear {
-            print("🔌 onDisappear вызван: " + (viewModel.currentGameId ?? ""))
-            viewModel.leaveGame()
-        }
     }
     
     private var connectionView: some View {
@@ -239,6 +235,13 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
         : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    }
+
+    deinit {
+        print("🔌 CooperativeGameViewModel deinit. Leaving game.")
+        if currentGameId != nil && !gameOver {
+            leaveGame()
+        }
     }
     
     // MARK: - Подключение
