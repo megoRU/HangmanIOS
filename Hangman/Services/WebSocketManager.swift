@@ -60,7 +60,10 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func connect() {
         if isConnected {
-            print("ℹ️ Уже подключены к WebSocket")
+            print("ℹ️ Уже подключены к WebSocket, немедленно вызываем webSocketDidConnect")
+            DispatchQueue.main.async {
+                self.delegate?.webSocketDidConnect()
+            }
             return
         }
         
