@@ -173,8 +173,13 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     // MARK: - Выход и разрыв
     func leaveGame() {
-        print("🔌 leaveGame вызван: " + (currentGameId ?? ""))
-        webSocketManager.leaveGame(gameId: currentGameId)
+        if statusText == "Ожидание соперника..." {
+            print("🔌 Игрок покинул экран поиска, разрываем сессию.")
+            webSocketManager.disconnect()
+        } else {
+            print("🔌 leaveGame вызван во время игры: " + (currentGameId ?? ""))
+            webSocketManager.leaveGame(gameId: currentGameId)
+        }
         webSocketManager.clearGameStale()
     }
 
