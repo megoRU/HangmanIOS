@@ -80,12 +80,9 @@ struct CooperativeGameView: View {
             print("🔌 onConnect:", selectedLanguage)
             viewModel.connect(mode: mode, language: selectedLanguage)
         }
-        .background(PoppedDetector(onPopped: {
-            print("🔌 PoppedDetector: view was popped, leaving game.")
-            if viewModel.currentGameId != nil && !viewModel.gameOver {
-                viewModel.leaveGame()
-            }
-        }))
+        .onDisappear {
+            viewModel.leaveGame()
+        }
     }
     
     private var connectionView: some View {
@@ -426,36 +423,5 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         opponentLeftAlert = false
         self.players = players
         self.playerCount = players.count
-    }
-}
-
-// Helper to detect when a view is popped from a UINavigationController.
-private struct PoppedDetector: UIViewControllerRepresentable {
-    let onPopped: () -> Void
-
-    func makeUIViewController(context: Context) -> PoppedDetectorController {
-        return PoppedDetectorController(onPopped: onPopped)
-    }
-
-    func updateUIViewController(_ uiViewController: PoppedDetectorController, context: Context) {}
-}
-
-private class PoppedDetectorController: UIViewController {
-    var onPopped: () -> Void
-
-    init(onPopped: @escaping () -> Void) {
-        self.onPopped = onPopped
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func didMove(toParent parent: UIViewController?) {
-        super.didMove(toParent: parent)
-        if parent == nil {
-            onPopped()
-        }
     }
 }

@@ -50,12 +50,9 @@ struct CompetitiveGameView: View {
                 print("🔌 onConnect:", selectedLanguage)
                 viewModel.connect(language: selectedLanguage)
             }
-            .background(PoppedDetector(onPopped: {
-                print("🔌 Competitive PoppedDetector: view was popped, leaving game.")
-                if viewModel.currentGameId != nil && !viewModel.gameOver {
-                    viewModel.leaveGame()
-                }
-            }))
+            .onDisappear {
+                viewModel.leaveGame()
+            }
     }
 
     private var waitingView: some View {
@@ -312,36 +309,5 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
         self.playerCount = players.count
         self.statusText = "Игра восстановлена"
         self.gameOver = false
-    }
-}
-
-// Helper to detect when a view is popped from a UINavigationController.
-private struct PoppedDetector: UIViewControllerRepresentable {
-    let onPopped: () -> Void
-
-    func makeUIViewController(context: Context) -> PoppedDetectorController {
-        return PoppedDetectorController(onPopped: onPopped)
-    }
-
-    func updateUIViewController(_ uiViewController: PoppedDetectorController, context: Context) {}
-}
-
-private class PoppedDetectorController: UIViewController {
-    var onPopped: () -> Void
-
-    init(onPopped: @escaping () -> Void) {
-        self.onPopped = onPopped
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func didMove(toParent parent: UIViewController?) {
-        super.didMove(toParent: parent)
-        if parent == nil {
-            onPopped()
-        }
     }
 }

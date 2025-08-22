@@ -242,9 +242,15 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             guard let self = self else { return }
             switch result {
             case .failure(let error):
-                DispatchQueue.main.async {
-                    print(error.localizedDescription)
-                    self.delegate?.didReceiveError("Ошибка приёмки: \(error.localizedDescription)")
+                let nsError = error as NSError
+                // 57: ENOTCONN (Socket is not connected), 9: EBADF (Bad file descriptor)
+                if nsError.domain == NSPOSIXErrorDomain && (nsError.code == 57 || nsError.code == 9) {
+                    print("ℹ️ WebSocket receive loop ended (normal closure): \(error.localizedDescription)")
+                } else {
+                    DispatchQueue.main.async {
+                        print("🔴 WebSocket receive error: \(error.localizedDescription)")
+                        self.delegate?.didReceiveError("Ошибка приёмки: \(error.localizedDescription)")
+                    }
                 }
                 self.isConnected = false
             case .success(let message):
