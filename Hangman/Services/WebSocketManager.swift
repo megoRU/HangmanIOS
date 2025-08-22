@@ -138,6 +138,11 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         isConnected = true
         print("✅ WebSocket подключен")
+
+        DispatchQueue.main.async {
+            self.delegate?.webSocketDidConnect()
+        }
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
             if let gameIdToRejoin = self.rejoinGameId {
                 print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")

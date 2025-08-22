@@ -249,7 +249,6 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
         statusText = mode == .code_friend ? "Ожидание кода..." : "Подключение..."
         webSocketManager.delegate = self
         webSocketManager.connect()
-        webSocketManager.findGame(mode: mode, playerId: UUID().uuidString)
     }
     
     func joinMulti(gameId: String) {
@@ -290,6 +289,11 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     // MARK: - WebSocketManagerDelegate
     
+    func webSocketDidConnect() {
+        print("✅ WebSocketDidConnect: отправляем findGame")
+        webSocketManager.findGame(mode: mode, playerId: UUID().uuidString)
+    }
+
     func didReceiveWaiting() {
         statusText = "Ожидание соперника..."
     }
