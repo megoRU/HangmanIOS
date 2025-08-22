@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Network
 
 final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     static let shared = WebSocketManager()
@@ -19,6 +20,9 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var currentMode: MultiplayerMode?
     private var wasSearchingCompetitive = false
     private var isWaitingForCoopPartner = false
+
+    private let monitor = NWPathMonitor()
+    private var isNetworkAvailable = false
     
     weak var delegate: WebSocketManagerDelegate?
     
@@ -27,6 +31,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         let config = URLSessionConfiguration.default
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
         
+        startMonitoringNetwork()
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(appDidBecomeActive),
@@ -44,8 +50,30 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     deinit {
         NotificationCenter.default.removeObserver(self)
+        monitor.cancel()
     }
-    
+
+    private func startMonitoringNetwork() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+
+            let wasAvailable = self.isNetworkAvailable
+            self.isNetworkAvailable = path.status == .satisfied
+
+            if !wasAvailable && self.isNetworkAvailable {
+                print("✅ Сеть снова доступна. Пытаемся восстановить соединение.")
+                self.attemptReconnection()
+            } else if wasAvailable && !self.isNetworkAvailable {
+                print("❌ Сеть потеряна.")
+                DispatchQueue.main.async {
+                    self.delegate?.didReceiveError("Интернет-соединение потеряно.")
+                }
+            }
+        }
+        let queue = DispatchQueue(label: "NetworkMonitor")
+        monitor.start(queue: queue)
+    }
+
     @objc private func appWillResignActive() {
         print("💤 Приложение уходит в фон.")
         if self.wasSearchingCompetitive {
@@ -56,41 +84,58 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
 
     @objc private func appDidBecomeActive() {
         print("☀️ Приложение стало активным.")
+        attemptReconnection()
+    }
 
-        if self.wasSearchingCompetitive {
-            print("🔁 Игрок вернулся после сворачивания во время поиска соревновательной игры. Начинаем поиск заново.")
-            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
-            return
-        }
+    private func attemptReconnection() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
 
-        if self.isWaitingForCoopPartner {
-            print("🔁 Игрок вернулся в лобби ожидания друга. Создаем комнату заново.")
-            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
-            return
-        }
+            print("ℹ️ Попытка восстановить соединение...")
 
-        if !isConnected && currentGameId != nil {
-            if let disconnectionTime = self.disconnectionTime {
-                let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
-                if timeSinceDisconnection <= 30 {
-                    print("🔌 [RECONNECT] Соединение с активной игрой было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
-                    rejoinGameId = currentGameId
-                    connect()
+            if self.wasSearchingCompetitive {
+                print("🔁 Игрок был в поиске соревновательной игры. Начинаем поиск заново.")
+                if !self.isConnected { self.connect() } else { self.delegate?.webSocketDidConnect() }
+                return
+            }
+
+            if self.isWaitingForCoopPartner {
+                print("🔁 Игрок был в лобби ожидания друга. Создаем комнату заново.")
+                if !self.isConnected { self.connect() } else { self.delegate?.webSocketDidConnect() }
+                return
+            }
+
+            if !self.isConnected && self.currentGameId != nil {
+                if let disconnectionTime = self.disconnectionTime {
+                    let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
+                    if timeSinceDisconnection <= 30 {
+                        print("🔌 [RECONNECT] Соединение с активной игрой было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
+                        self.rejoinGameId = self.currentGameId
+                        self.connect()
+                    } else {
+                        print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
+                        self.clearGameStale()
+                        self.delegate?.didReceiveError("Время для переподключения истекло.")
+                    }
+                    self.disconnectionTime = nil
                 } else {
-                    print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
-                    clearGameStale()
-                    delegate?.didReceiveError("Время для переподключения истекло.")
+                    print("🔌 [RECONNECT] Соединение с активной игрой было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
+                    self.rejoinGameId = self.currentGameId
+                    self.connect()
                 }
-                self.disconnectionTime = nil
-            } else {
-                print("🔌 [RECONNECT] Соединение с активной игрой было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
-                rejoinGameId = currentGameId
-                connect()
             }
         }
     }
     
     func connect() {
+        guard isNetworkAvailable else {
+            print("❌ Попытка подключения при отсутствии сети. Отменено.")
+            DispatchQueue.main.async {
+                self.delegate?.didReceiveError("Отсутствует подключение к интернету.")
+            }
+            return
+        }
+
         if isConnected {
             print("ℹ️ Уже подключены к WebSocket, немедленно вызываем webSocketDidConnect")
             DispatchQueue.main.async {
