@@ -307,11 +307,6 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     } else {
                         print("ℹ️ WebSocket receive loop ended (normal closure): \(error.localizedDescription)")
                     }
-                } else {
-                    DispatchQueue.main.async {
-                        print("🔴 WebSocket receive error: \(error.localizedDescription)")
-                        self.delegate?.didReceiveError("Ошибка приёмки: \(error.localizedDescription)")
-                    }
                 }
                 self.isConnected = false
             case .success(let message):

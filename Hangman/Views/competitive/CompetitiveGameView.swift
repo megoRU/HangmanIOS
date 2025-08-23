@@ -57,19 +57,26 @@ struct CompetitiveGameView: View {
 
     private var waitingView: some View {
         VStack(spacing: 16) {
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                .scaleEffect(2)
-
-            AnimatedDotsText(text: "Ожидание соперника")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.gray)
-
-            Text("Чтобы не потерять соединение, не сворачивайте приложение более чем на 30 секунд.")
-                .font(.caption)
+            HStack(spacing: 8) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                    .scaleEffect(0.8)
+                
+                Text("Ожидание соперника...")
+            }
+            
+            Text("Во время ожидания и игры запрещено переходить в разделы статистики и настроек.")
+                .font(.footnote)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 20)
+                .padding(.horizontal, 20)
+            
+            Text("Во время ожидания и игры запрещено переходить в разделы статистики и настроек.")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
@@ -117,19 +124,6 @@ struct CompetitiveGameView: View {
             }
         }
         .padding()
-    }
-}
-
-struct AnimatedDotsText: View {
-    let text: String
-    @State private var dots = 0
-    private let timer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
-
-    var body: some View {
-        Text(text + String(repeating: ".", count: dots))
-            .onReceive(timer) { _ in
-                dots = (dots + 1) % 4
-            }
     }
 }
 

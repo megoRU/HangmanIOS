@@ -129,19 +129,28 @@ struct CooperativeGameView: View {
     
     private var waitingFriendView: some View {
         VStack(spacing: 16) {
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                .scaleEffect(2)
-            
-            AnimatedDotsText(text: "Ожидаем друга")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.gray)
+            HStack(spacing: 8) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .blue))
+                    .scaleEffect(0.8)
+                
+                Text("Ожидание друга...")
+            }
 
-            Text("Чтобы не потерять соединение, не сворачивайте приложение более чем на 30 секунд.")
-                .font(.caption)
+            Text("Если приложение будет свернуто более чем на 30 секунд — комната будет удалена.")
+                .font(.footnote)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.top, 20)
+                .padding(.horizontal, 20)
+            
+            Text("Во время ожидания и игры запрещено переключаться на статистику и настройки.")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+            
+
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
