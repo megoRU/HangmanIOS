@@ -180,7 +180,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
             print("🔌 leaveGame вызван во время игры: " + (currentGameId ?? ""))
             webSocketManager.leaveGame(gameId: currentGameId)
         }
-        webSocketManager.clearGameStale()
+        // webSocketManager.clearGameStale() // ID игрока должен сохраняться
     }
 
     func disconnect() {
@@ -219,7 +219,7 @@ final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate
 
     func webSocketDidConnect() {
         print("✅ Competitive WebSocketDidConnect: отправляем findGame")
-        webSocketManager.findGame(mode: .duel, playerId: UUID().uuidString)
+        webSocketManager.findGame(mode: .duel)
     }
 
     func didReceiveWaiting() {

@@ -262,7 +262,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     func leaveGame() {
         print("🔌 leaveGame вызван: " + (createdGameId ?? ""))
         webSocketManager.leaveGame(gameId: currentGameId)
-        webSocketManager.clearGameStale()
+        // webSocketManager.clearGameStale() // ID игрока должен сохраняться
     }
     
     func disconnect() {
@@ -294,7 +294,7 @@ final class CooperativeGameViewModel: ObservableObject, WebSocketManagerDelegate
     
     func webSocketDidConnect() {
         print("✅ WebSocketDidConnect: отправляем findGame")
-        webSocketManager.findGame(mode: mode, playerId: UUID().uuidString)
+        webSocketManager.findGame(mode: mode)
     }
 
     func didReceiveWaiting() {

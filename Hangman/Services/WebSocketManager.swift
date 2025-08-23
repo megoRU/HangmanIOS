@@ -95,7 +95,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                     connect()
                 } else {
                     print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
-                    clearGameStale()
+                    // clearGameStale() // PlayerId не должен удаляться
                     delegate?.didReceiveError("Время для переподключения истекло.")
                 }
                 self.disconnectionTime = nil
@@ -127,14 +127,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         listen()
     }
     
-    func findGame(mode: MultiplayerMode, playerId: String) {
-        self.playerId = playerId
+    func findGame(mode: MultiplayerMode) {
+        if self.playerId == nil {
+            self.playerId = UUID().uuidString
+            print("🆔 PlayerId не найден, создан новый: \(self.playerId!)")
+        }
         self.currentMode = mode
         if mode == .duel {
             self.wasSearchingCompetitive = true
         }
         
-        sendFindOrCreate(mode: mode, playerId: playerId)
+        sendFindOrCreate(mode: mode)
     }
     
     func reconnect(gameId: String) {
@@ -183,15 +186,6 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         send(json: msg)
     }
     
-    func clearGameStale() {
-        print("🗑️ Очистка состояния игры: gameId, playerId, mode")
-        currentGameId = nil
-        playerId = nil
-        currentMode = nil
-        wasSearchingCompetitive = false
-        isWaitingForCoopPartner = false
-    }
-    
     // MARK: - URLSessionWebSocketDelegate
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
@@ -223,24 +217,29 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     // MARK: - Sending messages
     
-    private func sendFindOrCreate(mode: MultiplayerMode, playerId: String) {
+    private func sendFindOrCreate(mode: MultiplayerMode) {
         var msgDict: [String: Any]
         let nameValue: Any = name.isEmpty ? NSNull() : name
         let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
         
+        guard let currentPlayerId = self.playerId else {
+            print("❌ Ошибка: playerId отсутствует при попытке найти или создать игру.")
+            return
+        }
+
         switch mode {
         case .duel:
             msgDict = ["type": "FIND_GAME",
                        "lang": selectedLanguage.lowercased(),
                        "name": nameValue,
                        "image": imageValue,
-                       "playerId": playerId]
+                       "playerId": currentPlayerId]
         case .friends:
             msgDict = ["type": "CREATE_MULTI",
                        "lang": selectedLanguage.lowercased(),
                        "name": nameValue,
                        "image": imageValue,
-                       "playerId": playerId]
+                       "playerId": currentPlayerId]
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -414,7 +413,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
                    let word = json["word"] as? String {
                     print("✅ Игра завершилась, result:", result)
                     self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
-                    self.playerId = nil
+                    // self.playerId = nil // ID игрока должен сохраняться
                     self.currentGameId = nil
                     self.currentMode = nil
                     self.wasSearchingCompetitive = false
