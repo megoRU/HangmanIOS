@@ -39,8 +39,12 @@ struct HangmanApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainMenuView()
-                .preferredColorScheme(preferredScheme)
+            ZStack {
+                MainMenuView()
+                    .preferredColorScheme(preferredScheme)
+
+                DynamicBubbleView() // поверх
+            }
         }
     }
 }
