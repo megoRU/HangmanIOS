@@ -26,6 +26,7 @@ struct DynamicBubbleView: View {
         .edgesIgnoringSafeArea(.top)
     }
 }
+
 #Preview {
     MainMenuView()
 }
