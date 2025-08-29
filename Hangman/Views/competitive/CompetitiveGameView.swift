@@ -71,12 +71,6 @@ struct CompetitiveGameView: View {
                 .multilineTextAlignment(.center)
                 .padding(.top, 20)
                 .padding(.horizontal, 20)
-            
-            Text("Во время ожидания и игры запрещено переходить в разделы статистики и настроек.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(
