@@ -12,12 +12,9 @@ struct DynamicBubbleView: View {
                     .foregroundColor(.white)
                     .bold()
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding()
+            .frame(maxWidth: .infinity)
             .background(Color.blue)
-            .cornerRadius(25)
-            .shadow(radius: 4)
-            .padding(.top, 14) // чуть ниже safe area
 
             Spacer()
         }
