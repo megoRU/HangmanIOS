@@ -13,10 +13,11 @@ struct DynamicBubbleView: View {
                     .bold()
             }
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.vertical, 8)
             .background(Color.blue)
             .cornerRadius(25)
             .shadow(radius: 4)
+            .padding(14)
 
             Spacer()
         }
