@@ -2,7 +2,10 @@ import Foundation
 
 // MARK: - Payloads
 
-struct Player: Codable, Hashable {
+import Foundation
+
+struct Player: Codable, Hashable, Identifiable {
+    var id: String { name }
     let name: String
     let image: String
 }

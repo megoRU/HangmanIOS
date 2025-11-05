@@ -140,7 +140,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     func reconnect(gameId: String) {
         if let playerId = playerId {
             let payload = ReconnectPayload(gameId: gameId, playerId: playerId)
-            send(.reconnect(payload))
+            send(payload)
         } else {
             print("ℹ️ PlayerId is nil RECONNECT невозможен!")
         }
@@ -165,7 +165,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             name: name,
             image: avatarData?.base64EncodedString() ?? ""
         )
-        send(.joinMulti(payload))
+        send(payload)
     }
     
     func leaveGame(gameId: String?) {
@@ -174,7 +174,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             return
         }
         let payload = LeaveGamePayload(gameId: gameId)
-        send(.leaveGame(payload))
+        send(payload)
     }
     
     // MARK: - URLSessionWebSocketDelegate
@@ -237,10 +237,10 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         switch mode {
         case .duel:
             let payload = FindGamePayload(lang: lang, name: name, image: image, playerId: currentPlayerId)
-            send(.findGame(payload))
+            send(payload)
         case .friends:
             let payload = CreateMultiPayload(lang: lang, name: name, image: image, playerId: currentPlayerId)
-            send(.createMulti(payload))
+            send(payload)
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
@@ -250,7 +250,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     func sendMove(letter: Character, gameId: String) {
         guard isConnected else { return }
         let payload = MovePayload(gameId: gameId, letter: String(letter).uppercased())
-        send(.move(payload))
+        send(payload)
     }
     
     func send<T: Encodable>(_ message: T) {
