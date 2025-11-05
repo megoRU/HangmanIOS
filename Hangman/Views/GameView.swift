@@ -114,7 +114,7 @@ struct GameView: View {
     }
     
     private func gameOver() -> Bool {
-        attemptsLeft == 0 || !displayedWord.contains("_")
+        !wordToGuess.isEmpty && (attemptsLeft == 0 || !displayedWord.contains("_"))
     }
     
     private func resetGame() {
