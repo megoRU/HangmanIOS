@@ -125,6 +125,8 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     }
     
     func findGame(mode: MultiplayerMode) {
+        connect()
+
         if self.playerId == nil {
             self.playerId = UUID().uuidString
             print("🆔 PlayerId не найден, создан новый: \(self.playerId!)")
@@ -134,7 +136,13 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             self.wasSearchingCompetitive = true
         }
         
-        sendFindOrCreate(mode: mode)
+        $isConnected
+            .first(where: { $0 })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.sendFindOrCreate(mode: mode)
+            }
+            .store(in: &cancellables)
     }
     
     func reconnect(gameId: String) {
