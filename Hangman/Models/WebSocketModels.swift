@@ -7,7 +7,7 @@ import Foundation
 struct Player: Codable, Hashable, Identifiable {
     var id: String { name }
     let name: String
-    let image: String
+    let image: String?
 }
 
 // MARK: - Incoming Messages
@@ -99,7 +99,7 @@ enum ClientMessage {
 }
 
 struct FindGamePayload: Codable {
-    let type = "FIND_GAME"
+    var type = "FIND_GAME"
     let lang: String
     let name: String
     let image: String
@@ -107,7 +107,7 @@ struct FindGamePayload: Codable {
 }
 
 struct CreateMultiPayload: Codable {
-    let type = "CREATE_MULTI"
+    var type = "CREATE_MULTI"
     let lang: String
     let name: String
     let image: String
@@ -115,7 +115,7 @@ struct CreateMultiPayload: Codable {
 }
 
 struct JoinMultiPayload: Codable {
-    let type = "JOIN_MULTI"
+    var type = "JOIN_MULTI"
     let gameId: String
     let playerId: String
     let name: String
@@ -123,18 +123,18 @@ struct JoinMultiPayload: Codable {
 }
 
 struct MovePayload: Codable {
-    let type = "MOVE"
+    var type = "MOVE"
     let gameId: String
     let letter: String
 }
 
 struct LeaveGamePayload: Codable {
-    let type = "LEAVE_GAME"
+    var type = "LEAVE_GAME"
     let gameId: String?
 }
 
 struct ReconnectPayload: Codable {
-    let type = "RECONNECT"
+    var type = "RECONNECT"
     let gameId: String
     let playerId: String
 }
