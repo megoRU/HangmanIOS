@@ -319,7 +319,12 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     }
     
     private func handleMessage(_ text: String) {
-        guard let data = text.data(using: .utf8) else { return }
+        print("📩 Получено сообщение: \(text)")
+
+        guard let data = text.data(using: .utf8) else {
+            print("⚠️ Ошибка: не удалось преобразовать текст в Data")
+            return
+        }
 
         struct MessageType: Decodable {
             let type: String
@@ -328,30 +333,41 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         do {
             let decoder = JSONDecoder()
             let messageType = try decoder.decode(MessageType.self, from: data)
+            print("🔍 Тип сообщения: \(messageType.type)")
 
             let message: ServerMessage
             switch messageType.type {
             case "WAITING":
                 message = .waiting
             case "MATCH_FOUND":
+                print("🧩 Распарсиваю MATCH_FOUND")
                 message = .matchFound(try decoder.decode(MatchFoundPayload.self, from: data))
             case "GAME_CANCELED":
+                print("🚫 Распарсиваю GAME_CANCELED")
                 message = .gameCanceled(try decoder.decode(GameCanceledPayload.self, from: data))
             case "STATE_UPDATE":
+                print("🔄 Распарсиваю STATE_UPDATE")
                 message = .stateUpdate(try decoder.decode(StateUpdatePayload.self, from: data))
             case "ROOM_CREATED":
+                print("🏠 Распарсиваю ROOM_CREATED")
                 message = .roomCreated(try decoder.decode(RoomCreatedPayload.self, from: data))
             case "PLAYER_JOINED":
+                print("👤 Распарсиваю PLAYER_JOINED")
                 message = .playerJoined(try decoder.decode(PlayerJoinedPayload.self, from: data))
             case "PLAYER_LEFT":
+                print("🚶 Распарсиваю PLAYER_LEFT")
                 message = .playerLeft(try decoder.decode(PlayerLeftPayload.self, from: data))
             case "GAME_OVER":
+                print("🏁 Распарсиваю GAME_OVER")
                 message = .gameOver(try decoder.decode(GameOverPayload.self, from: data))
             case "GAME_OVER_COOP":
+                print("🤝 Распарсиваю GAME_OVER_COOP")
                 message = .gameOverCoop(try decoder.decode(CoopGameOverPayload.self, from: data))
             case "RESTORED":
+                print("♻️ Распарсиваю RESTORED")
                 message = .restored(try decoder.decode(RestoredPayload.self, from: data))
             case "ERROR":
+                print("❗ Распарсиваю ERROR")
                 message = .error(try decoder.decode(ErrorPayload.self, from: data))
             default:
                 print("⚠️ Неизвестный тип сообщения: \(messageType.type)")
@@ -359,10 +375,10 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             }
 
             DispatchQueue.main.async {
+                print("✅ Отправляю сообщение в subject: \(message)")
                 self.serverMessageSubject.send(message)
             }
         } catch {
-            print("📩 Получено сообщение: \(text)")
             print("❌ Ошибка декодирования: \(error)")
             if let decodingError = error as? DecodingError {
                 print("   Детали: \(decodingError)")
