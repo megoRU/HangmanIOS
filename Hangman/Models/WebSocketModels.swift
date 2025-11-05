@@ -7,7 +7,7 @@ import Foundation
 struct Player: Codable, Hashable, Identifiable {
     var id: String { name }
     let name: String
-    let image: String
+    let image: String?
 }
 
 // MARK: - Incoming Messages
