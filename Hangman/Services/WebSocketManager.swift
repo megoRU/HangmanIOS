@@ -321,13 +321,16 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     private func handleMessage(_ text: String) {
         guard let data = text.data(using: .utf8) else { return }
 
+        struct MessageType: Decodable {
+            let type: String
+        }
+
         do {
             let decoder = JSONDecoder()
-            let json = try decoder.decode([String: String].self, from: data)
-            guard let type = json["type"] else { return }
+            let messageType = try decoder.decode(MessageType.self, from: data)
 
             let message: ServerMessage
-            switch type {
+            switch messageType.type {
             case "WAITING":
                 message = .waiting
             case "MATCH_FOUND":
@@ -351,6 +354,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             case "ERROR":
                 message = .error(try decoder.decode(ErrorPayload.self, from: data))
             default:
+                print("⚠️ Неизвестный тип сообщения: \(messageType.type)")
                 return
             }
 
@@ -358,7 +362,11 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
                 self.serverMessageSubject.send(message)
             }
         } catch {
+            print("📩 Получено сообщение: \(text)")
             print("❌ Ошибка декодирования: \(error)")
+            if let decodingError = error as? DecodingError {
+                print("   Детали: \(decodingError)")
+            }
         }
     }
 }
