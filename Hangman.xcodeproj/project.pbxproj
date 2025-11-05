@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		932AB8832EBB9BB0002F8F4E /* .gitignore in Sources */ = {isa = PBXBuildFile; fileRef = 932AB8822EBB9BAB002F8F4E /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		932AB8822EBB9BAB002F8F4E /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = .gitignore; sourceTree = "<group>"; };
 		93BFDA3B2E3A6252001A19F4 /* Hangman.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Hangman.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -32,6 +37,7 @@
 		93BFDA022E3A4595001A19F4 = {
 			isa = PBXGroup;
 			children = (
+				932AB8822EBB9BAB002F8F4E /* .gitignore */,
 				93BFDA0D2E3A4595001A19F4 /* Hangman */,
 				93BFDA3B2E3A6252001A19F4 /* Hangman.app */,
 			);
@@ -111,6 +117,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				932AB8832EBB9BB0002F8F4E /* .gitignore in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
