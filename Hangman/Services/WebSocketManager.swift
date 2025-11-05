@@ -77,13 +77,13 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
 
         if self.wasSearchingCompetitive {
             print("🔁 Игрок вернулся после сворачивания во время поиска соревновательной игры. Начинаем поиск заново.")
-            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
+            if !isConnected { connect() }
             return
         }
 
         if self.isWaitingForCoopPartner {
             print("🔁 Игрок вернулся в лобби ожидания друга. Создаем комнату заново.")
-            if !isConnected { connect() } else { delegate?.webSocketDidConnect() }
+            if !isConnected { connect() }
             return
         }
 
@@ -97,7 +97,6 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
                 } else {
                     print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
                     // clearGameStale() // PlayerId не должен удаляться
-                    delegate?.didReceiveError("Время для переподключения истекло.")
                 }
                 self.disconnectionTime = nil
             } else {
@@ -110,16 +109,13 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     
     func connect() {
         if isConnected {
-            print("ℹ️ Уже подключены к WebSocket, немедленно вызываем webSocketDidConnect")
-            DispatchQueue.main.async {
-                self.delegate?.webSocketDidConnect()
-            }
+            print("ℹ️ WebSocket уже подключен.")
             return
         }
         
         print("🔌 WebSocket подключается...")
         guard let url = URL(string: "wss://hangman.megoru.ru/ws") else {
-            delegate?.didReceiveError("Неверный URL WebSocket")
+            print("❌ Неверный URL WebSocket")
             return
         }
         
@@ -188,16 +184,10 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         print("✅ WebSocket подключен")
         startPing()
 
-        DispatchQueue.main.async {
-            self.delegate?.webSocketDidConnect()
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            if let gameIdToRejoin = self.rejoinGameId {
-                print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")
-                self.sendReconnect(gameId: gameIdToRejoin, playerId: self.playerId ?? NSNull())
-                self.rejoinGameId = nil
-            }
+        if let gameIdToRejoin = self.rejoinGameId {
+            print("🔁 Пытаемся переподключиться к игре \(gameIdToRejoin)")
+            reconnect(gameId: gameIdToRejoin)
+            self.rejoinGameId = nil
         }
     }
     
