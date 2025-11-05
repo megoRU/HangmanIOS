@@ -50,6 +50,16 @@ class GameViewModel: ObservableObject {
             self.gameId = payload.gameId
             self.maskedWord = String(repeating: "_", count: payload.wordLength)
             self.players = payload.players
+        case .roomCreated(let payload):
+            self.gameId = payload.gameId
+        case .playerJoined(let payload):
+            self.gameId = payload.gameId
+            self.maskedWord = String(repeating: "_", count: payload.wordLength)
+            self.players = payload.players
+            self.attemptsLeft = payload.attemptsLeft
+            self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })
+        case .playerLeft(let payload):
+            self.players.removeAll { $0.name == payload.name }
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
