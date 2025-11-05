@@ -1,312 +1,67 @@
 import SwiftUI
-import UserNotifications
 
 struct CompetitiveGameView: View {
-    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    @StateObject private var viewModel =  CompetitiveGameViewModel()
+    @StateObject private var viewModel = GameViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingPlayerList = false
 
     var body: some View {
-        gameContentView
-            .navigationTitle("")
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    VStack(spacing: 2) {
-                        Text("Соревновательный")
-                            .font(.system(size: 20, weight: .bold))
-                        Text(viewModel.statusText)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.gray)
-                    }
-                    .multilineTextAlignment(.center)
+        VStack {
+            if viewModel.players.isEmpty {
+                waitingView
+            } else {
+                gameContentView
+            }
+        }
+        .navigationTitle("")
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                VStack(spacing: 2) {
+                    Text("Соревновательный")
+                        .font(.system(size: 20, weight: .bold))
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: { showingPlayerList = true }) {
-                        Image(systemName: "person.2.fill")
-                    }
-                    .disabled(viewModel.players.isEmpty)
+                .multilineTextAlignment(.center)
+            }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { showingPlayerList = true }) {
+                    Image(systemName: "person.2.fill")
                 }
+                .disabled(viewModel.players.isEmpty)
             }
-            .sheet(isPresented: $showingPlayerList) {
-                PlayerListView(players: viewModel.players)
+        }
+        .sheet(isPresented: $showingPlayerList) {
+            PlayerListView(players: viewModel.players)
+        }
+        .alert("Игра окончена", isPresented: .constant(viewModel.isGameOver)) {
+            Button("Выйти") {
+                dismiss()
             }
-            .alert("Игра окончена", isPresented: $viewModel.gameOver) {
-                Button("Новая игра") {
-                    viewModel.startNewGame()
-                }
-                Button("Выйти") {
-                    dismiss()
-                }
-            } message: {
-                Text(viewModel.gameOverMessage)
+        } message: {
+            Text(viewModel.gameResult == "LOSE" ? "Вы проиграли! Слово: \(viewModel.wordToGuess)" : "Вы выиграли! Слово: \(viewModel.wordToGuess)")
+        }
+        .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button("OK") {
+                viewModel.errorMessage = nil
             }
-            .alert("Ошибка", isPresented: $viewModel.showErrorAlert, actions: {
-                Button("OK", role: .cancel) { }
-            }, message: {
-                Text(viewModel.errorMessage ?? "Неизвестная ошибка")
-            })
-            .onAppear {
-                print("🔌 onConnect:", selectedLanguage)
-                viewModel.connect(language: selectedLanguage)
-            }
-            .onDisappear {
-                viewModel.leaveGame()
-            }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
+        }
+        .onAppear {
+            WebSocketManager.shared.findGame(mode: .duel)
+        }
+        .onDisappear {
+            WebSocketManager.shared.leaveGame(gameId: nil)
+        }
     }
 
     private var waitingView: some View {
         VStack(spacing: 16) {
-            HStack(spacing: 8) {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                    .scaleEffect(0.8)
-                
-                Text("Ожидание соперника...")
-            }
-            
-            Text("Во время ожидания и игры запрещено переходить в разделы статистики и настроек.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.top, 20)
-                .padding(.horizontal, 20)
+            ProgressView("Ожидание соперника...")
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                colors: [Color.white, Color.blue.opacity(0.1)],
-                startPoint: .top,
-                endPoint: .bottom)
-        )
-        .cornerRadius(16)
-        .padding()
     }
-
+    
     private var gameContentView: some View {
-        VStack(spacing: 25) {
-            
-            if viewModel.statusText == "Подключение..." {
-                waitingView
-            }
-            else if viewModel.statusText == "Ожидание соперника..." {
-                waitingView
-            } else if viewModel.maskedWord != "" {
-                Image(String(min(8, max(0, 8 - viewModel.attemptsLeft))))
-                    .resizable()
-                    .padding(.top, -50)
-
-                Text(viewModel.maskedWord)
-                    .font(.system(size: 36, weight: .bold, design: .monospaced))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.5)
-
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 8) {
-                    ForEach(viewModel.alphabet, id: \.self) { letter in
-                        Button(action: {
-                            viewModel.chooseLetter(letter)
-                        }) {
-                            Text(String(letter))
-                                .frame(width: 40, height: 40)
-                                .background(viewModel.guessedLetters.contains(letter) ? Color.gray : Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .disabled(viewModel.guessedLetters.contains(letter) || viewModel.gameOver)
-                    }
-                }
-            }
-        }
-        .padding()
-    }
-}
-
-#Preview {
-    MainMenuView()
-}
-
-final class CompetitiveGameViewModel: ObservableObject, WebSocketManagerDelegate {
-    
-    let manager = StatsManager.shared
-    @Published var maskedWord = ""
-    @Published var attemptsLeft = 8
-    @Published var guessedLetters = Set<Character>()
-    @Published var statusText = "Подключение..."
-    @Published var gameOver = false
-    @Published var gameOverMessage = ""
-    @Published var errorMessage: String?
-    @Published var showErrorAlert = false
-    @Published var opponentLeftAlert = false
-    @Published var shouldExitGame = false
-    @Published var createdGameId: String? = nil
-    @Published var playerCount = 0
-    @Published var players: [Player] = []
-
-    @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-    private var webSocketManager = WebSocketManager.shared
-    private(set) var currentGameId: String?
-
-    public var alphabet: [Character] {
-        selectedLanguage == "RU"
-        ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
-        : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    }
-
-    // MARK: - Подключение
-    func connect(language: String) {
-        statusText = "Подключение..."
-        webSocketManager.delegate = self
-        webSocketManager.connect()
-    }
-
-    // MARK: - Выход и разрыв
-    func leaveGame() {
-        if statusText == "Ожидание соперника..." {
-            print("🔌 Игрок покинул экран поиска, разрываем сессию.")
-            webSocketManager.disconnect()
-        } else {
-            print("🔌 leaveGame вызван во время игры: " + (currentGameId ?? ""))
-            webSocketManager.leaveGame(gameId: currentGameId)
-        }
-        // webSocketManager.clearGameStale() // ID игрока должен сохраняться
-    }
-
-    func disconnect() {
-        webSocketManager.disconnect()
-    }
-
-    // MARK: - Ходы
-    func chooseLetter(_ letter: Character) {
-        guard !gameOver, !guessedLetters.contains(letter), let gameId = currentGameId else { return }
-        guessedLetters.insert(letter)
-        webSocketManager.sendMove(letter: letter, gameId: gameId)
-    }
-
-    func startNewGame() {
-        resetGame()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            self.connect(language: self.selectedLanguage)
-        }
-    }
-
-    func resetGame() {
-        maskedWord = ""
-        attemptsLeft = 8
-        guessedLetters.removeAll()
-        statusText = "Подключение..."
-        gameOver = false
-        gameOverMessage = ""
-        currentGameId = nil
-        createdGameId = nil
-        opponentLeftAlert = false
-        shouldExitGame = false
-        players.removeAll()
-    }
-
-    // MARK: - WebSocketManagerDelegate
-
-    func webSocketDidConnect() {
-        print("✅ Competitive WebSocketDidConnect: отправляем findGame")
-        webSocketManager.findGame(mode: .duel)
-    }
-
-    func didReceiveWaiting() {
-        statusText = "Ожидание соперника..."
-    }
-
-    func didReceiveWaitingFriend() {
-        // This should not be called in duel mode
-    }
-
-    func didFindMatch(gameId: String, wordLength: Int, players: [Player]) {
-        statusText = "Игра началась!"
-        maskedWord = String(repeating: "_ ", count: wordLength).trimmingCharacters(in: .whitespaces)
-        attemptsLeft = 8
-        guessedLetters.removeAll()
-        gameOver = false
-        opponentLeftAlert = false
-        currentGameId = gameId
-        self.players = players
-        self.playerCount = players.count
-
-        let content = UNMutableNotificationContent()
-        content.title = "Игра найдена!"
-        content.body = "Соперник готов. Начинаем!"
-        content.sound = .default
-
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: trigger)
-        UNUserNotificationCenter.current().add(request)
-    }
-
-    func didReceiveStateUpdate(maskedWord: String, attemptsLeft: Int, duplicate: Bool, guessed: Set<String>?) {
-        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
-        self.attemptsLeft = attemptsLeft
-        if let guessed = guessed {
-            self.guessedLetters = Set(guessed.map { Character($0) })
-        }
-    }
-
-    func didReceiveGameOver(win: Bool, word: String) {
-        gameOver = true
-        gameOverMessage = win ? "Вы выиграли!\nСлово: \(word)" : "Вы проиграли!\nСлово: \(word)"
-        statusText = "Игра окончена"
-        shouldExitGame = true
-        
-        manager.addStat(mode: .multiplayer, result: win ? GameResult.win : GameResult.lose)
-    }
-
-    func didReceiveGameCanceled(word: String) {
-        gameOver = true
-        gameOverMessage = "Игра была отменена.\nСлово: \(word)"
-        statusText = "Игра окончена"
-        shouldExitGame = true
-
-    }
-    
-    func didReceivePlayerLeft(name: String) {
-        // Not used in competitive
-//        manager.addStat(mode: .multiplayer, result: GameResult.win)
-    }
-
-    func didReceiveError(_ message: String) {
-        print("🔴 Получена ошибка от сервера: \(message)")
-
-        if message.contains("декодирования") {
-            self.errorMessage = "Ошибка обработки данных с сервера. Детали в консоли."
-        } else {
-            self.errorMessage = message
-        }
-
-        self.showErrorAlert = true
-    }
-
-    func didCreateRoom(gameId: String) {
-        // This should not be called in duel mode
-    }
-
-    func didReceivePlayerJoined(attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
-        self.players = players
-        self.playerCount = players.count
-    }
-
-    func joinMulti(gameId: String) {
-        // Not used in competitive
-    }
-
-    func didReceiveCoopGameOver(result: String, word: String, attemptsLeft: Int, wordLength: Int, players: [Player], gameId: String, guessed: Set<String>) {
-        // This should not be called in competitive mode
-    }
-
-    func didRestoreGame(gameId: String, wordLength: Int, maskedWord: String, attemptsLeft: Int, guessed: Set<String>, players: [Player]) {
-        print("✅ Соревновательная игра восстановлена: \(gameId)")
-        self.currentGameId = gameId
-        self.maskedWord = maskedWord.replacingOccurrences(of: "\u{2007}", with: " ")
-        self.attemptsLeft = attemptsLeft
-        self.guessedLetters = Set(guessed.map { Character($0) })
-        self.players = players
-        self.playerCount = players.count
-        self.statusText = "Игра восстановлена"
-        self.gameOver = false
+        MultiplayerGameView()
+            .environmentObject(viewModel)
     }
 }

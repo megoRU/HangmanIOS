@@ -1,7 +1,8 @@
 import Foundation
 import SwiftUI
+import Combine
 
-final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
+final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
     static let shared = WebSocketManager()
     
     @AppStorage("name") private var name: String = "noname"
@@ -15,12 +16,14 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     private var urlSession: URLSession!
     private var rejoinGameId: String?
     private var disconnectionTime: Date?
-    private var isConnected = false
+    @Published var isConnected = false
     private var currentMode: MultiplayerMode?
     private var wasSearchingCompetitive = false
     private var isWaitingForCoopPartner = false
+    private var pingTimer: Timer?
     
-    weak var delegate: WebSocketManagerDelegate?
+    let serverMessageSubject = PassthroughSubject<ServerMessage, Never>()
+    private var cancellables = Set<AnyCancellable>()
     
     private override init() {
         super.init()
@@ -63,11 +66,9 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             return
         }
 
-        // 1.1. Для Coompetitive в режиме игры: любой выход из игры (назад/сворачивание) отправлять LEAVE_GAME
-        // 3.1. Для Cooperative в режиме игры: сворачивание или выход отправлять LEAVE_GAME
         if currentGameId != nil {
-            print("👋🏼 Игрок был в активной игре. Отправляем LEAVE_GAME.")
-            leaveGame(gameId: currentGameId)
+            print("👋🏼 Игрок был в активной игре. Разрываем соединение для возможного реконнекта.")
+            disconnect()
         }
     }
 
@@ -142,7 +143,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func reconnect(gameId: String) {
         if let playerId = playerId {
-            sendReconnect(gameId: gameId, playerId: playerId)
+            let payload = ReconnectPayload(gameId: gameId, playerId: playerId)
+            send(.reconnect(payload))
         } else {
             print("ℹ️ PlayerId is nil RECONNECT невозможен!")
         }
@@ -157,20 +159,17 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         isConnected = false
         webSocketTask = nil
-        delegate = nil
     }
     
     func joinMulti(gameId: String) {
         guard isConnected else { return }
-        let msg: [String: Any] = [
-            "type": "JOIN_MULTI",
-            "gameId": gameId,
-            "playerId": playerId ?? NSNull(),
-            "name": name.isEmpty ? NSNull() : name,
-            "image": avatarData?.base64EncodedString() ?? NSNull()
-        ]
-        print("📤 Отправляем JOIN_MULTI:", msg)
-        send(json: msg)
+        let payload = JoinMultiPayload(
+            gameId: gameId,
+            playerId: playerId ?? "",
+            name: name,
+            image: avatarData?.base64EncodedString() ?? ""
+        )
+        send(.joinMulti(payload))
     }
     
     func leaveGame(gameId: String?) {
@@ -178,12 +177,8 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
             print("⚠️ Нельзя отправить LEAVE_GAME, сокет закрыт")
             return
         }
-        var msg: [String: Any] = ["type": "LEAVE_GAME"]
-        if let gameId = gameId {
-            msg["gameId"] = gameId
-        }
-        print("🔌 Отправка LEAVE_GAME: \(msg)")
-        send(json: msg)
+        let payload = LeaveGamePayload(gameId: gameId)
+        send(.leaveGame(payload))
     }
     
     // MARK: - URLSessionWebSocketDelegate
@@ -191,6 +186,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         isConnected = true
         print("✅ WebSocket подключен")
+        startPing()
 
         DispatchQueue.main.async {
             self.delegate?.webSocketDidConnect()
@@ -207,6 +203,7 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
         isConnected = false
+        stopPing()
         if closeCode != .goingAway && currentGameId != nil {
             print("❌ WebSocket отключен непреднамеренно, код: \(closeCode.rawValue). Запускаем 30-секундный таймер на переподключение.")
             disconnectionTime = Date()
@@ -216,76 +213,74 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     // MARK: - Sending messages
+     private func startPing() {
+        stopPing()
+        pingTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
+            self?.sendPing()
+        }
+    }
+
+    private func stopPing() {
+        pingTimer?.invalidate()
+        pingTimer = nil
+    }
+
+    private func sendPing() {
+        print("📤 Отправляем PING")
+        webSocketTask?.sendPing { error in
+            if let error = error {
+                print("❌ Ошибка отправки PING: \(error)")
+            }
+        }
+    }
     
     private func sendFindOrCreate(mode: MultiplayerMode) {
-        var msgDict: [String: Any]
-        let nameValue: Any = name.isEmpty ? NSNull() : name
-        let imageValue: Any = avatarData?.base64EncodedString() ?? NSNull()
-        
         guard let currentPlayerId = self.playerId else {
             print("❌ Ошибка: playerId отсутствует при попытке найти или создать игру.")
             return
         }
 
+        let lang = selectedLanguage.lowercased()
+        let name = self.name
+        let image = avatarData?.base64EncodedString() ?? ""
+
         switch mode {
         case .duel:
-            msgDict = ["type": "FIND_GAME",
-                       "lang": selectedLanguage.lowercased(),
-                       "name": nameValue,
-                       "image": imageValue,
-                       "playerId": currentPlayerId]
+            let payload = FindGamePayload(lang: lang, name: name, image: image, playerId: currentPlayerId)
+            send(.findGame(payload))
         case .friends:
-            msgDict = ["type": "CREATE_MULTI",
-                       "lang": selectedLanguage.lowercased(),
-                       "name": nameValue,
-                       "image": imageValue,
-                       "playerId": currentPlayerId]
+            let payload = CreateMultiPayload(lang: lang, name: name, image: image, playerId: currentPlayerId)
+            send(.createMulti(payload))
         case .code_friend:
             print("🟢 Режим code_friend — ждём ручного ввода Game ID")
             return
         }
-        print("📤 Отправляем:", msgDict)
-        send(json: msgDict)
     }
     
     func sendMove(letter: Character, gameId: String) {
         guard isConnected else { return }
-        let msgDict: [String: Any] = [
-            "type": "MOVE",
-            "gameId": gameId,
-            "letter": String(letter).uppercased()
-        ]
-        print("📤 Отправляем:", msgDict)
-        send(json: msgDict)
+        let payload = MovePayload(gameId: gameId, letter: String(letter).uppercased())
+        send(.move(payload))
     }
     
-    func sendReconnect(gameId: String, playerId: Any) {
-        guard isConnected else { return }
-        let msg: [String: Any] = [
-            "type": "RECONNECT",
-            "gameId": gameId,
-            "playerId": playerId
-        ]
-        print("📤 Отправляем RECONNECT:", msg)
-        send(json: msg)
-    }
-    
-    public func send(json: [String: Any]) {
-        guard let webSocketTask,
-              webSocketTask.state == .running else {
+    func send<T: Encodable>(_ message: T) {
+        guard let webSocketTask = webSocketTask, webSocketTask.state == .running else {
             print("⚠️ Попытка отправки, но сокет не в состоянии running")
             return
         }
-        guard let data = try? JSONSerialization.data(withJSONObject: json),
-              let jsonString = String(data: data, encoding: .utf8) else { return }
 
-        let message = URLSessionWebSocketTask.Message.string(jsonString)
-        webSocketTask.send(message) { error in
-            if let error = error {
-                DispatchQueue.main.async {
-                    self.delegate?.didReceiveError("Ошибка отправки: \(error.localizedDescription)")
+        do {
+            let data = try JSONEncoder().encode(message)
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("📤 Отправляем: \(jsonString)")
+                webSocketTask.send(.string(jsonString)) { error in
+                    if let error = error {
+                        print("❌ Ошибка отправки: \(error.localizedDescription)")
+                    }
                 }
             }
+        } catch {
+            print("❌ Ошибка кодирования: \(error.localizedDescription)")
         }
     }
 
@@ -326,169 +321,46 @@ final class WebSocketManager: NSObject, URLSessionWebSocketDelegate {
     }
     
     private func handleMessage(_ text: String) {
-        guard let data = text.data(using: .utf8),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let type = json["type"] as? String else { return }
-        
-        DispatchQueue.main.async {
+        guard let data = text.data(using: .utf8) else { return }
+
+        do {
+            let decoder = JSONDecoder()
+            let json = try decoder.decode([String: String].self, from: data)
+            guard let type = json["type"] else { return }
+
+            let message: ServerMessage
             switch type {
             case "WAITING":
-                print("✅ WAITING")
-                self.delegate?.didReceiveWaiting()
-                
+                message = .waiting
             case "MATCH_FOUND":
-                struct MatchFoundPayload: Decodable {
-                    let gameId: String
-                    let wordLength: Int
-                    let players: [Player]
-                }
-                self.decodePayload(MatchFoundPayload.self, data: data) { payload in
-                    print("✅ MATCH_FOUND, wordLength:", payload.wordLength, "players:", payload.players.count)
-                    self.currentGameId = payload.gameId
-                    self.wasSearchingCompetitive = false
-                    self.isWaitingForCoopPartner = false
-                    self.delegate?.didFindMatch(gameId: payload.gameId, wordLength: payload.wordLength, players: payload.players)
-                }
-                
+                message = .matchFound(try decoder.decode(MatchFoundPayload.self, from: data))
             case "GAME_CANCELED":
-                if let word = json["word"] as? String {
-                    print("✅ GAME_CANCELED, word:", word)
-                    self.delegate?.didReceiveGameCanceled(word: word)
-                }
-                
+                message = .gameCanceled(try decoder.decode(GameCanceledPayload.self, from: data))
             case "STATE_UPDATE":
-                if let maskedWord = json["maskedWord"] as? String,
-                   let attemptsLeft = json["attemptsLeft"] as? Int {
-                    print("✅ STATE_UPDATE, maskedWord:", maskedWord)
-                    let duplicate = json["duplicate"] as? Bool ?? false
-                    let guessedSet = (json["guessed"] as? [String]).map { Set($0) }
-                    self.delegate?.didReceiveStateUpdate(maskedWord: maskedWord, attemptsLeft: attemptsLeft, duplicate: duplicate, guessed: guessedSet)
-                }
-                
+                message = .stateUpdate(try decoder.decode(StateUpdatePayload.self, from: data))
             case "ROOM_CREATED":
-                if let gameId = json["gameId"] as? String {
-                    print("✅ Игра создана, gameId:", gameId)
-                    self.currentGameId = gameId
-                    self.isWaitingForCoopPartner = true
-                    self.delegate?.didCreateRoom(gameId: gameId)
-                    self.delegate?.didReceiveWaitingFriend()
-                }
-                
+                message = .roomCreated(try decoder.decode(RoomCreatedPayload.self, from: data))
             case "PLAYER_JOINED":
-                struct PlayerJoinedPayload: Decodable {
-                    let attemptsLeft: Int
-                    let wordLength: Int
-                    let players: [Player]
-                    let gameId: String
-                    let guessed: [String]
-                }
-                self.decodePayload(PlayerJoinedPayload.self, data: data) { payload in
-                    print("✅ PLAYER_JOINED, players:", payload.players.count)
-                    self.currentGameId = payload.gameId
-                    if payload.players.count >= 2 {
-                        self.isWaitingForCoopPartner = false
-                    }
-                    self.delegate?.didReceivePlayerJoined(
-                        attemptsLeft: payload.attemptsLeft,
-                        wordLength: payload.wordLength,
-                        players: payload.players,
-                        gameId: payload.gameId,
-                        guessed: Set(payload.guessed)
-                    )
-                }
-                
+                message = .playerJoined(try decoder.decode(PlayerJoinedPayload.self, from: data))
             case "PLAYER_LEFT":
-                if let name = json["name"] as? String {
-                    print("✅ PLAYER_LEFT, name:", name)
-                    self.delegate?.didReceivePlayerLeft(name: name)
-                }
-                
+                message = .playerLeft(try decoder.decode(PlayerLeftPayload.self, from: data))
             case "GAME_OVER":
-                if let result = json["result"] as? String,
-                   let word = json["word"] as? String {
-                    print("✅ Игра завершилась, result:", result)
-                    self.delegate?.didReceiveGameOver(win: result == "WIN", word: word)
-                    // self.playerId = nil // ID игрока должен сохраняться
-                    self.currentGameId = nil
-                    self.currentMode = nil
-                    self.wasSearchingCompetitive = false
-                    self.isWaitingForCoopPartner = false
-                }
-                
+                message = .gameOver(try decoder.decode(GameOverPayload.self, from: data))
             case "GAME_OVER_COOP":
-                struct CoopGameOverPayload: Decodable {
-                    let result: String
-                    let word: String
-                    let attemptsLeft: Int
-                    let wordLength: Int
-                    let players: [Player]
-                    let gameId: String
-                    let guessed: [String]
-                }
-                self.decodePayload(CoopGameOverPayload.self, data: data) { payload in
-                    print("✅ Совместная игра завершилась, result:", payload.result)
-                    self.currentGameId = payload.gameId
-                    self.isWaitingForCoopPartner = false
-                    self.delegate?.didReceiveCoopGameOver(
-                        result: payload.result,
-                        word: payload.word,
-                        attemptsLeft: payload.attemptsLeft,
-                        wordLength: payload.wordLength,
-                        players: payload.players,
-                        gameId: payload.gameId,
-                        guessed: Set(payload.guessed)
-                    )
-                }
-                
+                message = .gameOverCoop(try decoder.decode(CoopGameOverPayload.self, from: data))
             case "RESTORED":
-                struct RestoredPayload: Decodable {
-                    let gameId: String
-                    let wordLength: Int
-                    let maskedWord: String
-                    let attemptsLeft: Int
-                    let guessed: [String]
-                    let players: [Player]
-                }
-                self.decodePayload(RestoredPayload.self, data: data) { payload in
-                    print("✅ RESTORED, gameId:", payload.gameId)
-                    self.currentGameId = payload.gameId
-                    if self.currentMode != .duel && payload.players.count < 2 {
-                        self.isWaitingForCoopPartner = true
-                    } else {
-                        self.isWaitingForCoopPartner = false
-                    }
-                    self.delegate?.didRestoreGame(
-                        gameId: payload.gameId,
-                        wordLength: payload.wordLength,
-                        maskedWord: payload.maskedWord,
-                        attemptsLeft: payload.attemptsLeft,
-                        guessed: Set(payload.guessed),
-                        players: payload.players
-                    )
-                }
-                
+                message = .restored(try decoder.decode(RestoredPayload.self, from: data))
             case "ERROR":
-                if let msg = json["msg"] as? String {
-                    self.delegate?.didReceiveError(msg)
-                }
-                
+                message = .error(try decoder.decode(ErrorPayload.self, from: data))
             default:
-                break
+                return
             }
-        }
-    }
-    
-    // Вспомогательная функция для декодирования payload
-    private func decodePayload<T: Decodable>(_ type: T.Type, data: Data, completion: (T) -> Void) {
-        do {
-            let payload = try JSONDecoder().decode(type, from: data)
-            completion(payload)
+
+            DispatchQueue.main.async {
+                self.serverMessageSubject.send(message)
+            }
         } catch {
-            print("❌ Ошибка декодирования \(type):", error.localizedDescription)
-            if let decodingError = error as? DecodingError {
-                print("❌ Детали ошибки декодирования:", decodingError)
-            }
-            self.delegate?.didReceiveError("Ошибка обработки данных с сервера. Детали в консоли.")
+            print("❌ Ошибка декодирования: \(error)")
         }
     }
 }
