@@ -76,8 +76,8 @@ struct SettingsView: View {
                             Task {
                                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
                                    let uiImage = UIImage(data: data) {
-                                    let resizedImage = uiImage.resize(to: CGSize(width: 64, height: 64))
-                                    avatarData = resizedImage?.jpegData(compressionQuality: 0.8)
+                                    let resizedImage = uiImage.resize(to: CGSize(width: 1024, height: 1024))
+                                    avatarData = resizedImage?.jpegData(compressionQuality: 1.0)
                                 }
                             }
                         }
