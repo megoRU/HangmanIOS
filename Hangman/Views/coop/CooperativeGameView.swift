@@ -58,46 +58,50 @@ struct CooperativeGameView: View {
     }
     
     private var connectionView: some View {
-        VStack(spacing: 20) {
-            Spacer()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 20) {
+                    Spacer(minLength: geometry.size.height * 0.1)
 
-            Text("Присоединиться к игре")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
+                    Text("Присоединиться к игре")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .multilineTextAlignment(.center)
 
-            Text("Введите код, который вам прислал друг, чтобы начать игру.")
-                .font(.headline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+                    Text("Введите код, который вам прислал друг, чтобы начать игру.")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
 
-            TextField("Код игры", text: $manualJoinId)
-                .font(.system(size: 22, weight: .bold, design: .monospaced))
+                    TextField("Код игры", text: $manualJoinId)
+                        .font(.system(size: 22, weight: .bold, design: .monospaced))
+                        .padding()
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(10)
+                        .keyboardType(.asciiCapable)
+                        .autocapitalization(.allCharacters)
+                        .multilineTextAlignment(.center)
+
+                    Button(action: {
+                        WebSocketManager.shared.joinMulti(gameId: manualJoinId)
+                    }) {
+                        Text("Подключиться")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundColor(.white)
+                            .background(Color.blue)
+                            .cornerRadius(10)
+                    }
+                    .disabled(manualJoinId.isEmpty)
+
+                    Spacer()
+                }
                 .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(10)
-                .keyboardType(.asciiCapable)
-                .autocapitalization(.allCharacters)
-                .multilineTextAlignment(.center)
-
-            Button(action: {
-                WebSocketManager.shared.joinMulti(gameId: manualJoinId)
-            }) {
-                Text("Подключиться")
-                    .fontWeight(.semibold)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .cornerRadius(10)
+                .frame(minHeight: geometry.size.height)
             }
-            .disabled(manualJoinId.isEmpty)
-            
-            Spacer()
-            Spacer()
         }
-        .padding()
     }
     
     private var gameContentView: some View {
