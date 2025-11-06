@@ -9,6 +9,7 @@ class GameViewModel: ObservableObject {
     @Published var attemptsLeft = 8
     @Published var players: [Player] = []
     @Published var gameResult: String?
+    @Published var coopRoundResult: CoopGameOverPayload?
     @Published var errorMessage: String?
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
@@ -54,6 +55,14 @@ class GameViewModel: ObservableObject {
         webSocketManager.findGame(mode: .duel)
     }
     
+    func continueCoopGame(with payload: CoopGameOverPayload) {
+        self.maskedWord = (0..<payload.wordLength).map { _ in "_" }.joined(separator: " ")
+        self.attemptsLeft = payload.attemptsLeft
+        self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })
+        self.wordToGuess = ""
+        self.coopRoundResult = nil
+    }
+
     func resetGame() {
         // Логика сброса игры будет добавлена позже
     }
@@ -87,7 +96,7 @@ class GameViewModel: ObservableObject {
             self.gameResult = payload.result
             self.wordToGuess = payload.word
         case .gameOverCoop(let payload):
-            self.gameResult = payload.result
+            self.coopRoundResult = payload
             self.wordToGuess = payload.word
         case .restored(let payload):
             self.gameId = payload.gameId

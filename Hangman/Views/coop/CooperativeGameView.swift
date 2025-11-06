@@ -33,12 +33,20 @@ struct CooperativeGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
-        .alert("Игра окончена", isPresented: .constant(viewModel.isGameOver)) {
+        .alert(
+            (viewModel.coopRoundResult?.result ?? "") == "WIN" ? "Вы выиграли!" : "Вы проиграли!",
+            isPresented: .constant(viewModel.coopRoundResult != nil)
+        ) {
+            if let payload = viewModel.coopRoundResult {
+                Button("Продолжить") {
+                    viewModel.continueCoopGame(with: payload)
+                }
+            }
             Button("Выйти") {
                 dismiss()
             }
         } message: {
-            Text(viewModel.gameResult == "LOSE" ? "Вы проиграли! Слово: \(viewModel.wordToGuess)" : "Вы выиграли! Слово: \(viewModel.wordToGuess)")
+            Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующему раунду?")
         }
         .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
