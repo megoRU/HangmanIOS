@@ -76,9 +76,32 @@ struct CooperativeGameView: View {
     }
     
     private var gameContentView: some View {
-        VStack {
+        VStack(spacing: 20) {
             if viewModel.players.isEmpty {
-                ProgressView("Ожидание друга...")
+                if let gameId = viewModel.gameId {
+                    Text("Комната создана!")
+                        .font(.title.bold())
+                        .padding(.top)
+
+                    Text("Поделитесь этим кодом с другом:")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
+
+                    Text(gameId)
+                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                        .padding()
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(10)
+                        .onTapGesture {
+                            UIPasteboard.general.string = gameId
+                        }
+
+                    ProgressView("Ожидание подключения...")
+                    Spacer()
+
+                } else {
+                    ProgressView("Создание комнаты...")
+                }
             } else {
                 MultiplayerGameView()
                     .environmentObject(viewModel)

@@ -15,7 +15,7 @@ class GameViewModel: ObservableObject {
     
     private var webSocketManager = WebSocketManager.shared
     private var cancellables = Set<AnyCancellable>()
-    private var gameId: String?
+    @Published var gameId: String?
     
     var isGameOver: Bool {
         gameResult != nil
