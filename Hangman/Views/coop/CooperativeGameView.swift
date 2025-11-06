@@ -60,10 +60,11 @@ struct CooperativeGameView: View {
     private var connectionView: some View {
         VStack(spacing: 20) {
             Spacer()
-            
+
             Text("Присоединиться к игре")
                 .font(.largeTitle)
                 .fontWeight(.bold)
+                .multilineTextAlignment(.center)
 
             Text("Введите код, который вам прислал друг, чтобы начать игру.")
                 .font(.headline)
@@ -111,14 +112,20 @@ struct CooperativeGameView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
 
-                    Text(gameId)
-                        .font(.system(size: 24, weight: .bold, design: .monospaced))
-                        .padding()
-                        .background(Color.secondary.opacity(0.1))
-                        .cornerRadius(10)
-                        .onTapGesture {
+                    HStack {
+                        Text(gameId)
+                            .font(.system(size: 24, weight: .bold, design: .monospaced))
+                            .padding(.horizontal)
+
+                        Button(action: {
                             UIPasteboard.general.string = gameId
+                        }) {
+                            Image(systemName: "doc.on.doc")
                         }
+                    }
+                    .padding()
+                    .background(Color.secondary.opacity(0.1))
+                    .cornerRadius(10)
 
                     ProgressView("Ожидание подключения...")
                     Spacer()
