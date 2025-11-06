@@ -166,14 +166,27 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     }
     
     func joinMulti(gameId: String) {
-        guard isConnected else { return }
-        let payload = JoinMultiPayload(
-            gameId: gameId,
-            playerId: playerId ?? "",
-            name: name,
-            image: avatarData?.base64EncodedString() ?? ""
-        )
-        send(payload)
+        connect()
+
+        if self.playerId == nil {
+            self.playerId = UUID().uuidString
+            print("🆔 PlayerId не найден, создан новый: \(self.playerId!)")
+        }
+
+        $isConnected
+            .first(where: { $0 })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                let payload = JoinMultiPayload(
+                    gameId: gameId,
+                    playerId: self.playerId ?? "",
+                    name: self.name,
+                    image: self.avatarData?.base64EncodedString() ?? ""
+                )
+                self.send(payload)
+            }
+            .store(in: &cancellables)
     }
     
     func leaveGame(gameId: String?) {
