@@ -74,6 +74,9 @@ class GameViewModel: ObservableObject {
             self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })
         case .playerLeft(let payload):
             self.players.removeAll { $0.name == payload.name }
+        case .gameCanceled(let payload):
+            self.gameResult = "WIN"
+            self.wordToGuess = payload.word
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
