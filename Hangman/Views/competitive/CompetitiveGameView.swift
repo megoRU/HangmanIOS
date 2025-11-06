@@ -53,7 +53,7 @@ struct CompetitiveGameView: View {
             WebSocketManager.shared.findGame(mode: .duel)
         }
         .onDisappear {
-            WebSocketManager.shared.leaveGame(gameId: nil)
+            WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
         }
     }
 
