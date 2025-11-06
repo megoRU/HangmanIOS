@@ -40,6 +40,19 @@ class GameViewModel: ObservableObject {
         guard let gameId = gameId else { return }
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
+
+    func resetAndFindGame() {
+        wordToGuess = ""
+        maskedWord = ""
+        guessedLetters = []
+        attemptsLeft = 8
+        players = []
+        gameResult = nil
+        errorMessage = nil
+        gameId = nil
+
+        webSocketManager.findGame(mode: .duel)
+    }
     
     func resetGame() {
         // Логика сброса игры будет добавлена позже

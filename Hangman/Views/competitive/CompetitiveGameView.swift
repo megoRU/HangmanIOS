@@ -33,6 +33,9 @@ struct CompetitiveGameView: View {
             PlayerListView(players: viewModel.players)
         }
         .alert("Игра окончена", isPresented: .constant(viewModel.isGameOver)) {
+            Button("Новая игра") {
+                viewModel.resetAndFindGame()
+            }
             Button("Выйти") {
                 dismiss()
             }
