@@ -36,6 +36,7 @@ class GameViewModel: ObservableObject {
     }
     
     func chooseLetter(_ letter: Character) {
+        guessedLetters.insert(letter)
         guard let gameId = gameId else { return }
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
