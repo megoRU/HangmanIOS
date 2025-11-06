@@ -10,23 +10,23 @@ class GameViewModel: ObservableObject {
     @Published var players: [Player] = []
     @Published var gameResult: String?
     @Published var errorMessage: String?
-
+    
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
-
+    
     private var webSocketManager = WebSocketManager.shared
     private var cancellables = Set<AnyCancellable>()
     private var gameId: String?
-
+    
     var isGameOver: Bool {
         gameResult != nil
     }
-
+    
     private var alphabet: [Character] {
         selectedLanguage == "RU"
         ? Array("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ")
         : Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     }
-
+    
     init() {
         webSocketManager.serverMessageSubject
             .sink { [weak self] message in
@@ -34,27 +34,27 @@ class GameViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
+    
     func chooseLetter(_ letter: Character) {
         guard let gameId = gameId else { return }
         webSocketManager.sendMove(letter: letter, gameId: gameId)
     }
-
+    
     func resetGame() {
         // Логика сброса игры будет добавлена позже
     }
-
+    
     private func handleServerMessage(_ message: ServerMessage) {
         switch message {
         case .matchFound(let payload):
             self.gameId = payload.gameId
-            self.maskedWord = String(repeating: "_", count: payload.wordLength)
+            self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
         case .roomCreated(let payload):
             self.gameId = payload.gameId
         case .playerJoined(let payload):
             self.gameId = payload.gameId
-            self.maskedWord = String(repeating: "_", count: payload.wordLength)
+            self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
             self.attemptsLeft = payload.attemptsLeft
             self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })
