@@ -7,14 +7,11 @@ struct MultiplayerMenuView: View {
 
     var body: some View {
         VStack(spacing: 30) {
-            Text("Мультиплеер")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-            
             Image(String(7))
                 .resizable()
                 .scaledToFit()
-            
+                .frame(height: 350) // или любое подходящее значение
+
             NavigationLink(destination: CompetitiveGameView()) {
                 Text("⚔️ Играть 1 vs 1")
                     .font(.title2)
@@ -50,8 +47,13 @@ struct MultiplayerMenuView: View {
 
             Spacer()
         }
-        .navigationTitle("Назад")
-        .toolbar(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Мультиплеер")
+                    .font(.system(size: 28, weight: .bold)) // размер и жирность
+                    .multilineTextAlignment(.center)         // центрирование
+            }
+        }
     }
 }
 

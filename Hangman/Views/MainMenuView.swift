@@ -13,10 +13,6 @@ struct MainMenuView: View {
             // Главная
             NavigationStack {
                 VStack(spacing: 30) {
-                    Text("Hangman")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top, 40)
                     
                     Image(String(attemptsLeft))
                         .resizable()
@@ -50,9 +46,15 @@ struct MainMenuView: View {
                     
                     Spacer()
                 }
-                .navigationTitle("Главная")
-                .toolbar(.hidden, for: .navigationBar)
+                .toolbar {
+                    ToolbarItem(placement: .principal) {
+                        Text("Hangman")
+                            .font(.system(size: 28, weight: .bold)) // размер и жирность
+                            .multilineTextAlignment(.center)         // центрирование
+                    }
+                }
             }
+            
             .tabItem {
                 Label("Главная", systemImage: "house")
             }
