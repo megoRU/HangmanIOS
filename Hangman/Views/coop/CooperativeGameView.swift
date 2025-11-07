@@ -46,7 +46,7 @@ struct CooperativeGameView: View {
                 dismiss()
             }
         } message: {
-            Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующему раунду?")
+            Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующей игре?")
         }
         .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
@@ -55,13 +55,23 @@ struct CooperativeGameView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
+        }
         .onAppear {
             if mode == .friends {
                 WebSocketManager.shared.findGame(mode: .friends)
             }
-        }
-        .onDisappear {
-            WebSocketManager.shared.leaveGame(gameId: nil)
         }
     }
     

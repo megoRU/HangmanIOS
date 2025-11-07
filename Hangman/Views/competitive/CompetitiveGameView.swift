@@ -4,6 +4,7 @@ struct CompetitiveGameView: View {
     @StateObject private var viewModel = GameViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingPlayerList = false
+    @State private var hasStartedSearch = false
 
     var body: some View {
         VStack {
@@ -50,10 +51,23 @@ struct CompetitiveGameView: View {
             Text(viewModel.errorMessage ?? "")
         }
         .onAppear {
-            WebSocketManager.shared.findGame(mode: .duel)
+            if !hasStartedSearch {
+                hasStartedSearch = true
+                WebSocketManager.shared.findGame(mode: .duel)
+            }
         }
-        .onDisappear {
-            WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
+                    dismiss()
+                } label: {
+                    HStack {
+                        Image(systemName: "chevron.left")
+                    }
+                }
+            }
         }
     }
 
