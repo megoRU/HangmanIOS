@@ -18,8 +18,6 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     private var disconnectionTime: Date?
     @Published var isConnected = false
     private var currentMode: MultiplayerMode?
-    private var wasSearchingCompetitive = false
-    private var isWaitingForCoopPartner = false
     private var pingTimer: Timer?
     
     let serverMessageSubject = PassthroughSubject<ServerMessage, Never>()
@@ -29,81 +27,24 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         super.init()
         let config = URLSessionConfiguration.default
         urlSession = URLSession(configuration: config, delegate: self, delegateQueue: OperationQueue())
-        
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(appWillResignActive),
-            name: UIApplication.willResignActiveNotification,
-            object: nil
-        )
     }
     
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
-    @objc private func appWillResignActive() {
-        print("💤 Приложение уходит в фон.")
-
-        // 2.1. Для Coompetitive в режиме поиска: любой выход из игры (назад/сворачивание) отправлять close session
-        if wasSearchingCompetitive {
-            print("👋🏼 Игрок был в поиске соревновательной игры. Разрываем сессию.")
-            disconnect()
-            return
-        }
-
-        // 3. Для Cooperative в режиме ожидания друга: если игрок вышел, ничего не делаем при сворачивании.
-        // Реконнект произойдет в appDidBecomeActive.
-        if isWaitingForCoopPartner {
-            print("⏳ Игрок в лобби ожидания друга. Ничего не делаем при сворачивании.")
-            return
-        }
-
-        if currentGameId != nil {
-            print("👋🏼 Игрок был в активной игре. Разрываем соединение для возможного реконнекта.")
-            disconnect()
-        }
-    }
-
-    @objc private func appDidBecomeActive() {
-        print("☀️ Приложение стало активным.")
-
-        if self.wasSearchingCompetitive {
-            print("🔁 Игрок вернулся после сворачивания во время поиска соревновательной игры. Начинаем поиск заново.")
-            if !isConnected { connect() }
-            return
-        }
-
-        if self.isWaitingForCoopPartner {
-            print("🔁 Игрок вернулся в лобби ожидания друга. Создаем комнату заново.")
-            if !isConnected { connect() }
-            return
-        }
-
-        if !isConnected && currentGameId != nil {
-            if let disconnectionTime = self.disconnectionTime {
-                let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
-                if timeSinceDisconnection <= 30 {
-                    print("🔌 [RECONNECT] Соединение с активной игрой было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
-                    rejoinGameId = currentGameId
-                    connect()
-                } else {
-                    print("🔌 [RECONNECT] Окно для переподключения (30с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
-                    // clearGameStale() // PlayerId не должен удаляться
-                }
-                self.disconnectionTime = nil
-            } else {
-                print("🔌 [RECONNECT] Соединение с активной игрой было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
-                rejoinGameId = currentGameId
+    func handleScenePhaseChange(to newPhase: ScenePhase) {
+        switch newPhase {
+        case .active:
+            print("☀️ Приложение стало активным.")
+            if let gameId = currentGameId, !isConnected {
+                print("🔌 Обнаружена незавершенная игра (\(gameId)). Попытка переподключения...")
+                rejoinGameId = gameId
                 connect()
             }
+        case .inactive, .background:
+            print("💤 Приложение уходит в фон или неактивно.")
+            if currentGameId != nil {
+                 disconnect()
+            }
+        @unknown default:
+            break
         }
     }
     
@@ -132,9 +73,6 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             print("🆔 PlayerId не найден, создан новый: \(self.playerId!)")
         }
         self.currentMode = mode
-        if mode == .duel {
-            self.wasSearchingCompetitive = true
-        }
         
         $isConnected
             .first(where: { $0 })
@@ -147,8 +85,22 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     
     func reconnect(gameId: String) {
         if let playerId = playerId {
-            let payload = ReconnectPayload(gameId: gameId, playerId: playerId)
-            send(payload)
+            if let disconnectionTime = self.disconnectionTime {
+                let timeSinceDisconnection = Date().timeIntervalSince(disconnectionTime)
+                if timeSinceDisconnection <= 100 {
+                    print("🔌 [RECONNECT] Соединение с активной игрой было разорвано \(String(format: "%.1f", timeSinceDisconnection))с назад. Пытаемся переподключиться...")
+                    let payload = ReconnectPayload(gameId: gameId, playerId: playerId)
+                    send(payload)
+                } else {
+                    print("🔌 [RECONNECT] Окно для переподключения (100с) истекло. Прошло \(String(format: "%.1f", timeSinceDisconnection))с. Очищаем состояние.")
+                    self.currentGameId = nil
+                }
+                self.disconnectionTime = nil
+            } else {
+                 print("🔌 [RECONNECT] Соединение с активной игрой было разорвано, пытаемся переподключиться (время разрыва неизвестно)...")
+                 let payload = ReconnectPayload(gameId: gameId, playerId: playerId)
+                 send(payload)
+            }
         } else {
             print("ℹ️ PlayerId is nil RECONNECT невозможен!")
         }
@@ -216,7 +168,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         isConnected = false
         stopPing()
         if closeCode != .goingAway && currentGameId != nil {
-            print("❌ WebSocket отключен непреднамеренно, код: \(closeCode.rawValue). Запускаем 30-секундный таймер на переподключение.")
+            print("❌ WebSocket отключен непреднамеренно, код: \(closeCode.rawValue).")
             disconnectionTime = Date()
         } else {
             print("❌ WebSocket отключен штатно.")

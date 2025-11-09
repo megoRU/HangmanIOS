@@ -11,6 +11,8 @@ import UserNotifications
 @main
 struct HangmanApp: App {
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
+    @Environment(\.scenePhase) private var scenePhase
+    private let webSocketManager = WebSocketManager.shared
 
     init() {
         requestNotificationPermission()
@@ -44,6 +46,9 @@ struct HangmanApp: App {
                     .preferredColorScheme(preferredScheme)
 
                 DynamicBubbleView() // поверх
+            }
+            .onChange(of: scenePhase) { newPhase in
+                webSocketManager.handleScenePhaseChange(to: newPhase)
             }
         }
     }
