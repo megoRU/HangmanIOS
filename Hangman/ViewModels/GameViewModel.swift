@@ -72,12 +72,15 @@ class GameViewModel: ObservableObject {
         switch message {
         case .matchFound(let payload):
             self.gameId = payload.gameId
+            webSocketManager.setCurrentGameId(payload.gameId)
             self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
         case .roomCreated(let payload):
             self.gameId = payload.gameId
+            webSocketManager.setCurrentGameId(payload.gameId)
         case .playerJoined(let payload):
             self.gameId = payload.gameId
+            webSocketManager.setCurrentGameId(payload.gameId)
             self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
             self.attemptsLeft = payload.attemptsLeft
@@ -88,6 +91,7 @@ class GameViewModel: ObservableObject {
             self.gameResult = "WIN"
             self.wordToGuess = payload.word
             statsManager.addStat(mode: .multiplayer, result: .win)
+            webSocketManager.setCurrentGameId(nil)
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
@@ -99,13 +103,18 @@ class GameViewModel: ObservableObject {
             self.wordToGuess = payload.word
             let result: GameResult = payload.result == "WIN" ? .win : .lose
             statsManager.addStat(mode: .multiplayer, result: result)
+            webSocketManager.setCurrentGameId(nil)
         case .gameOverCoop(let payload):
             self.coopRoundResult = payload
             self.wordToGuess = payload.word
             let result: GameResult = payload.result == "WIN" ? .win : .lose
             statsManager.addStat(mode: .cooperative, result: result)
+            if payload.result != "CONTINUE" {
+                webSocketManager.setCurrentGameId(nil)
+            }
         case .restored(let payload):
             self.gameId = payload.gameId
+            webSocketManager.setCurrentGameId(payload.gameId)
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
             self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })

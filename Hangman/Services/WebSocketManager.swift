@@ -47,6 +47,10 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
             break
         }
     }
+
+    func setCurrentGameId(_ gameId: String?) {
+        self.currentGameId = gameId
+    }
     
     func connect() {
         if isConnected {
