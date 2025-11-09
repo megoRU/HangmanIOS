@@ -14,6 +14,7 @@ class GameViewModel: ObservableObject {
     
     @AppStorage("gameLanguage") private var selectedLanguage = "RU"
     
+    private let statsManager = StatsManager.shared
     private var webSocketManager = WebSocketManager.shared
     private var cancellables = Set<AnyCancellable>()
     @Published public var gameId: String?
@@ -86,6 +87,7 @@ class GameViewModel: ObservableObject {
         case .gameCanceled(let payload):
             self.gameResult = "WIN"
             self.wordToGuess = payload.word
+            statsManager.addStat(mode: .multiplayer, result: .win)
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
@@ -95,9 +97,13 @@ class GameViewModel: ObservableObject {
         case .gameOver(let payload):
             self.gameResult = payload.result
             self.wordToGuess = payload.word
+            let result: GameResult = payload.result == "WIN" ? .win : .lose
+            statsManager.addStat(mode: .multiplayer, result: result)
         case .gameOverCoop(let payload):
             self.coopRoundResult = payload
             self.wordToGuess = payload.word
+            let result: GameResult = payload.result == "WIN" ? .win : .lose
+            statsManager.addStat(mode: .cooperative, result: result)
         case .restored(let payload):
             self.gameId = payload.gameId
             self.maskedWord = payload.maskedWord
