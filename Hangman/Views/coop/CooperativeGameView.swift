@@ -55,6 +55,13 @@ struct CooperativeGameView: View {
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
+        .alert("Игра окончена!", isPresented: .constant(viewModel.gameResult != nil)) {
+            Button("Выйти") {
+                dismiss()
+            }
+        } message: {
+            Text("Ваш оппонент покинул игру. Вы победили!")
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

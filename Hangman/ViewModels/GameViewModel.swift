@@ -94,7 +94,8 @@ class GameViewModel: ObservableObject {
         case .gameCanceled(let payload):
             self.gameResult = "WIN"
             self.wordToGuess = payload.word
-            statsManager.addStat(mode: .multiplayer, result: .win)
+            let gameMode: GameMode = self.coopRoundResult != nil ? .cooperative : .multiplayer
+            statsManager.addStat(mode: gameMode, result: .win)
             webSocketManager.clearGameSession()
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
