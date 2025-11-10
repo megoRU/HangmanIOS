@@ -72,21 +72,25 @@ class GameViewModel: ObservableObject {
         switch message {
         case .matchFound(let payload):
             self.gameId = payload.gameId
-            webSocketManager.setCurrentGameId(payload.gameId)
             self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
         case .roomCreated(let payload):
             self.gameId = payload.gameId
-            webSocketManager.setCurrentGameId(payload.gameId)
         case .playerJoined(let payload):
             self.gameId = payload.gameId
-            webSocketManager.setCurrentGameId(payload.gameId)
             self.maskedWord = (0..<payload.wordLength).map { _ in "_"}.joined(separator:" ")
             self.players = payload.players
             self.attemptsLeft = payload.attemptsLeft
             self.guessedLetters = Set(payload.guessed.map { Character($0.uppercased()) })
+
+            if payload.players.count > 1 {
+                webSocketManager.setCurrentGameId(payload.gameId)
+            }
         case .playerLeft(let payload):
             self.players.removeAll { $0.name == payload.name }
+            if self.players.count < 2 {
+                webSocketManager.setCurrentGameId(nil)
+            }
         case .gameCanceled(let payload):
             self.gameResult = "WIN"
             self.wordToGuess = payload.word

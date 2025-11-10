@@ -149,7 +149,7 @@ struct SettingsView: View {
                 }
 
                 // MARK: Категория
-                Section(header: Text("Категория")) {
+                Section(header: Text("Категория"), footer: Text("Эта настройка применяется только для одиночной игры.")) {
                     Picker("Выберите категорию", selection: $selectedCategory) {
                         ForEach(categories.keys.sorted(), id: \.self) { key in
                             Text(categories[key] ?? key)
