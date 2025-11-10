@@ -33,15 +33,20 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         switch newPhase {
         case .active:
             print("☀️ Приложение стало активным.")
-            if let gameId = currentGameId, !isConnected {
-                print("🔌 Обнаружена незавершенная игра (\(gameId)). Попытка переподключения...")
-                rejoinGameId = gameId
-                connect()
+            if !isConnected {
+                if let gameId = currentGameId {
+                    print("🔌 Обнаружена незавершенная игра (\(gameId)). Попытка переподключения...")
+                    rejoinGameId = gameId
+                    connect()
+                } else if let mode = currentMode {
+                    print("🔌 Восстанавливаем сессию поиска/ожидания для режима \(mode)...")
+                    findGame(mode: mode)
+                }
             }
         case .inactive, .background:
             print("💤 Приложение уходит в фон или неактивно.")
-            if currentGameId != nil {
-                 disconnect()
+            if isConnected {
+                disconnect()
             }
         @unknown default:
             break
