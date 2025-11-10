@@ -89,13 +89,13 @@ class GameViewModel: ObservableObject {
         case .playerLeft(let payload):
             self.players.removeAll { $0.name == payload.name }
             if self.players.count < 2 {
-                webSocketManager.setCurrentGameId(nil)
+                webSocketManager.clearGameSession()
             }
         case .gameCanceled(let payload):
             self.gameResult = "WIN"
             self.wordToGuess = payload.word
             statsManager.addStat(mode: .multiplayer, result: .win)
-            webSocketManager.setCurrentGameId(nil)
+            webSocketManager.clearGameSession()
         case .stateUpdate(let payload):
             self.maskedWord = payload.maskedWord
             self.attemptsLeft = payload.attemptsLeft
@@ -107,14 +107,14 @@ class GameViewModel: ObservableObject {
             self.wordToGuess = payload.word
             let result: GameResult = payload.result == "WIN" ? .win : .lose
             statsManager.addStat(mode: .multiplayer, result: result)
-            webSocketManager.setCurrentGameId(nil)
+            webSocketManager.clearGameSession()
         case .gameOverCoop(let payload):
             self.coopRoundResult = payload
             self.wordToGuess = payload.word
             let result: GameResult = payload.result == "WIN" ? .win : .lose
             statsManager.addStat(mode: .cooperative, result: result)
             if payload.result != "CONTINUE" {
-                webSocketManager.setCurrentGameId(nil)
+                webSocketManager.clearGameSession()
             }
         case .restored(let payload):
             self.gameId = payload.gameId

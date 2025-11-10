@@ -57,6 +57,11 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
         self.currentGameId = gameId
     }
     
+    func clearGameSession() {
+        self.currentGameId = nil
+        self.currentMode = nil
+    }
+
     func connect() {
         if isConnected {
             print("ℹ️ WebSocket уже подключен.")
@@ -75,6 +80,7 @@ final class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDel
     }
     
     func findGame(mode: MultiplayerMode) {
+        setCurrentGameId(nil)
         connect()
 
         if self.playerId == nil {
