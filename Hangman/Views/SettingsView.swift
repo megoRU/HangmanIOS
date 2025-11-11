@@ -43,32 +43,22 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 // MARK: Аватарка + имя
-                Section(header: Text("Персонализация"))  {
-                    HStack(spacing: 16) {
-                        // Аватарка
+                Section(header: Text("Персонализация")) {
+                    VStack(spacing: 16) {
                         PhotosPicker(selection: $selectedItem, matching: .images) {
                             avatarImage
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 70, height: 70)
+                                .frame(width: 120, height: 120)
                                 .clipShape(Circle())
-                                .overlay(
-                                    Circle().stroke(
-                                        LinearGradient(colors: [.blue, .purple],
-                                                       startPoint: .topLeading,
-                                                       endPoint: .bottomTrailing),
-                                        lineWidth: 3
-                                    )
-                                )
-                                .shadow(radius: 4)
+                                .shadow(radius: 5)
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "camera.fill")
-                                        .font(.system(size: 12))
-                                        .padding(5)
-                                        .background(Color.blue)
+                                        .font(.system(size: 16))
+                                        .padding(8)
+                                        .background(.gray.opacity(0.8))
                                         .clipShape(Circle())
                                         .foregroundColor(.white)
-                                        .shadow(radius: 1)
                                 }
                         }
                         .buttonStyle(.plain)
@@ -82,88 +72,59 @@ struct SettingsView: View {
                             }
                         }
 
-                        // Если имя пустое — кнопка, иначе поле с галкой
-                        if name.isEmpty && !isEditingName {
-                            Button {
-                                isEditingName = true
-                            } label: {
-                                HStack {
-                                    Spacer()
-                                    Image(systemName: "pencil")
-                                    Text("Задать имя")
-                                    
-                                    Spacer()
-                                }
-                                .foregroundColor(.blue)
-                                .padding(.vertical, 10)
-                                .padding(.horizontal, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(
-                                            LinearGradient(colors: [.blue, .purple],
-                                                           startPoint: .leading,
-                                                           endPoint: .trailing),
-                                            lineWidth: 2
-                                        )
-                                )
-                            }
-                        } else {
-                            HStack {
-                                TextField("", text: $name)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(
-                                                LinearGradient(colors: [.blue, .purple],
-                                                               startPoint: .leading,
-                                                               endPoint: .trailing),
-                                                lineWidth: 2
-                                            )
-                                    )
-                                    .autocorrectionDisabled()
-                                    .textInputAutocapitalization(.words)
-                                    .disabled(!isEditingName)
+                        HStack {
+                            TextField("Ваше имя", text: $name)
+                                .textFieldStyle(.roundedBorder)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.words)
+                                .disabled(!isEditingName)
 
-                                Button {
-                                    isEditingName.toggle()
-                                } label: {
-                                    Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil.circle.fill")
-                                        .foregroundColor(isEditingName ? .green : .accentColor)
-                                        .font(.title)
-                                }
+                            Button {
+                                isEditingName.toggle()
+                            } label: {
+                                Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
+                                    .foregroundColor(isEditingName ? .green : .accentColor)
+                                    .font(.title2)
                             }
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 6)
                 }
 
 
                 // MARK: Язык
                 Section(header: Text("Язык игры")) {
-                    Picker("Выберите язык", selection: $selectedLanguage) {
+                    Picker(selection: $selectedLanguage) {
                         ForEach(languages.keys.sorted(), id: \.self) { key in
                             Text(languages[key] ?? key)
                                 .tag(key)
                         }
+                    } label: {
+                        Label("Язык", systemImage: "globe")
                     }
                 }
 
                 // MARK: Категория
                 Section(header: Text("Категория"), footer: Text("Эта настройка применяется только для одиночной игры.")) {
-                    Picker("Выберите категорию", selection: $selectedCategory) {
+                    Picker(selection: $selectedCategory) {
                         ForEach(categories.keys.sorted(), id: \.self) { key in
                             Text(categories[key] ?? key)
                                 .tag(key)
                         }
+                    } label: {
+                        Label("Категория", systemImage: "tag")
                     }
                 }
 
                 // MARK: Оформление
                 Section(header: Text("Оформление")) {
-                    Picker("Тема", selection: $selectedTheme) {
+                    Picker(selection: $selectedTheme) {
                         ForEach(AppTheme.allCases) { theme in
                             Text(theme.displayName).tag(theme.rawValue)
                         }
+                    } label: {
+                        Label("Тема", systemImage: "paintbrush")
                     }
                 }
 
