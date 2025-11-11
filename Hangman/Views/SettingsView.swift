@@ -43,20 +43,19 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 // MARK: Аватарка + имя
-                Section(header: Text("Персонализация")) {
-                    VStack(spacing: 16) {
+                Section(header: Text("Профиль")) {
+                    HStack(spacing: 16) {
                         PhotosPicker(selection: $selectedItem, matching: .images) {
                             avatarImage
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 120, height: 120)
+                                .frame(width: 80, height: 80)
                                 .clipShape(Circle())
-                                .shadow(radius: 5)
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "camera.fill")
-                                        .font(.system(size: 16))
-                                        .padding(8)
-                                        .background(.gray.opacity(0.8))
+                                        .font(.system(size: 12))
+                                        .padding(6)
+                                        .background(.gray.opacity(0.7))
                                         .clipShape(Circle())
                                         .foregroundColor(.white)
                                 }
@@ -72,26 +71,29 @@ struct SettingsView: View {
                             }
                         }
 
-                        HStack {
-                            TextField("Ваше имя", text: $name)
-                                .textFieldStyle(.roundedBorder)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.words)
-                                .disabled(!isEditingName)
-
-                            Button {
-                                isEditingName.toggle()
-                            } label: {
-                                Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
-                                    .foregroundColor(isEditingName ? .green : .accentColor)
-                                    .font(.title2)
-                            }
-                        }
+                        Text(name.isEmpty ? "Ваше имя" : name)
+                            .font(.title2)
+                            .fontWeight(.bold)
                     }
-                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 6)
                 }
 
+                Section(header: Text("Имя пользователя")) {
+                    HStack {
+                        TextField("Ваше имя", text: $name)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.words)
+                            .disabled(!isEditingName)
+
+                        Button {
+                            isEditingName.toggle()
+                        } label: {
+                            Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
+                                .foregroundColor(isEditingName ? .green : .accentColor)
+                                .font(.title2)
+                        }
+                    }
+                }
 
                 // MARK: Язык
                 Section(header: Text("Язык игры")) {
