@@ -169,7 +169,7 @@ struct CooperativeGameView: View {
                         .environmentObject(viewModel)
                 }
             }
-            .frame(minHeight: geometry.size.height)
+            .frame(maxWidth: .infinity, minHeight: geometry.size.height)
         }
     }
 }
