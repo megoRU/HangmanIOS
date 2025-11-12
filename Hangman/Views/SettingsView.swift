@@ -76,7 +76,12 @@ struct SettingsView: View {
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .focused($isNameFieldFocused)
-                                .onSubmit { isEditingName = false }
+                                .onSubmit {
+                                    if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        name = "Noname"
+                                    }
+                                    isEditingName = false
+                                }
                         } else {
                             Text(name.isEmpty ? "Noname" : name)
                                 .font(.title2)
@@ -86,6 +91,11 @@ struct SettingsView: View {
                         Spacer()
 
                         Button {
+                            if isEditingName {
+                                if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    name = "Noname"
+                                }
+                            }
                             isEditingName.toggle()
                         } label: {
                             Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
