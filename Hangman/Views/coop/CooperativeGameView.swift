@@ -131,14 +131,15 @@ struct CooperativeGameView: View {
     }
     
     private var gameContentView: some View {
-        VStack(spacing: 20) {
-            if viewModel.players.isEmpty {
-                if let gameId = viewModel.gameId {
-                    Text("Комната создана!")
-                        .font(.title.bold())
-                        .padding(.top)
+        GeometryReader { geometry in
+            VStack(spacing: 20) {
+                if viewModel.players.isEmpty {
+                    if let gameId = viewModel.gameId {
+                        Spacer()
+                        Text("Комната создана!")
+                            .font(.title.bold())
 
-                    Text("Поделитесь этим кодом с другом:")
+                        Text("Поделитесь этим кодом с другом:")
                         .font(.headline)
                         .foregroundColor(.secondary)
 

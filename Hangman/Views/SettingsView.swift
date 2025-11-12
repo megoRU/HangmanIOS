@@ -49,7 +49,7 @@ struct SettingsView: View {
                             avatarImage
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 80, height: 80)
+                                .frame(width: 50, height: 50)
                                 .clipShape(Circle())
                                 .overlay(alignment: .bottomTrailing) {
                                     Image(systemName: "camera.fill")

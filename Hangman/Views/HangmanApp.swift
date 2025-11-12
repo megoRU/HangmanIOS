@@ -13,7 +13,6 @@ struct HangmanApp: App {
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
     @Environment(\.scenePhase) private var scenePhase
     private let webSocketManager = WebSocketManager.shared
-    @State private var showLaunchScreen = true
 
     init() {
         requestNotificationPermission()
@@ -43,21 +42,10 @@ struct HangmanApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                if showLaunchScreen {
-                    LaunchScreenView()
-                } else {
-                    MainMenuView()
-                        .preferredColorScheme(preferredScheme)
+                MainMenuView()
+                    .preferredColorScheme(preferredScheme)
 
-                    DynamicBubbleView() // поверх
-                }
-            }
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    withAnimation {
-                        showLaunchScreen = false
-                    }
-                }
+                DynamicBubbleView() // поверх
             }
             .onChange(of: scenePhase) { newPhase in
                 webSocketManager.handleScenePhaseChange(to: newPhase)
