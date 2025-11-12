@@ -143,31 +143,33 @@ struct CooperativeGameView: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
 
-                    HStack {
-                        Text(gameId)
-                            .font(.system(size: 24, weight: .bold, design: .monospaced))
-                            .padding(.horizontal)
+                        HStack {
+                            Text(gameId)
+                                .font(.system(size: 24, weight: .bold, design: .monospaced))
+                                .padding(.horizontal)
 
-                        Button(action: {
-                            UIPasteboard.general.string = gameId
-                        }) {
-                            Image(systemName: "doc.on.doc")
+                            Button(action: {
+                                UIPasteboard.general.string = gameId
+                            }) {
+                                Image(systemName: "doc.on.doc")
+                            }
                         }
+                        .padding()
+                        .background(Color.secondary.opacity(0.1))
+                        .cornerRadius(10)
+
+                        ProgressView("Ожидаю подключения друга.")
+                        Spacer()
+
+                    } else {
+                        ProgressView("Создание комнаты...")
                     }
-                    .padding()
-                    .background(Color.secondary.opacity(0.1))
-                    .cornerRadius(10)
-
-                    ProgressView("Ожидаю подключения друга.")
-                    Spacer()
-
                 } else {
-                    ProgressView("Создание комнаты...")
+                    MultiplayerGameView()
+                        .environmentObject(viewModel)
                 }
-            } else {
-                MultiplayerGameView()
-                    .environmentObject(viewModel)
             }
+            .frame(minHeight: geometry.size.height)
         }
     }
 }
