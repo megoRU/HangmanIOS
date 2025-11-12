@@ -30,41 +30,6 @@ struct CooperativeGameView: View {
                     }
                 }
             }
-        }
-        .sheet(isPresented: $showingPlayerList) {
-            PlayerListView(players: viewModel.players)
-        }
-        .alert(
-            (viewModel.coopRoundResult?.result ?? "") == "WIN" ? "Вы выиграли!" : "Вы проиграли!",
-            isPresented: .constant(viewModel.coopRoundResult != nil)
-        ) {
-            if let payload = viewModel.coopRoundResult {
-                Button("Продолжить") {
-                    viewModel.continueCoopGame(with: payload)
-                }
-            }
-            Button("Выйти") {
-                dismiss()
-            }
-        } message: {
-            Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующей игре?")
-        }
-        .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("OK") {
-                viewModel.errorMessage = nil
-            }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
-        .alert("Игра окончена!", isPresented: .constant(viewModel.gameResult != nil)) {
-            Button("Выйти") {
-                dismiss()
-            }
-        } message: {
-            Text("Ваш оппонент покинул игру. Вы победили!")
-        }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
                     WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
@@ -76,6 +41,11 @@ struct CooperativeGameView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingPlayerList) {
+            PlayerListView(players: viewModel.players)
+        }
+        .navigationBarBackButtonHidden(true)
+        .withAlerts(viewModel: viewModel, dismiss: dismiss)
         .onAppear {
             if mode == .friends {
                 WebSocketManager.shared.findGame(mode: .friends)
@@ -171,5 +141,49 @@ struct CooperativeGameView: View {
             }
             .frame(maxWidth: .infinity, minHeight: geometry.size.height)
         }
+    }
+}
+
+fileprivate struct WithAlerts: ViewModifier {
+    @ObservedObject var viewModel: GameViewModel
+    var dismiss: DismissAction
+
+    func body(content: Content) -> some View {
+        content
+            .alert(
+                (viewModel.coopRoundResult?.result ?? "") == "WIN" ? "Вы выиграли!" : "Вы проиграли!",
+                isPresented: .constant(viewModel.coopRoundResult != nil)
+            ) {
+                if let payload = viewModel.coopRoundResult {
+                    Button("Продолжить") {
+                        viewModel.continueCoopGame(with: payload)
+                    }
+                }
+                Button("Выйти") {
+                    dismiss()
+                }
+            } message: {
+                Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующей игре?")
+            }
+            .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
+                Button("OK") {
+                    viewModel.errorMessage = nil
+                }
+            } message: {
+                Text(viewModel.errorMessage ?? "")
+            }
+            .alert("Игра окончена!", isPresented: .constant(viewModel.gameResult != nil)) {
+                Button("Выйти") {
+                    dismiss()
+                }
+            } message: {
+                Text("Ваш оппонент покинул игру. Вы победили!")
+            }
+    }
+}
+
+fileprivate extension View {
+    func withAlerts(viewModel: GameViewModel, dismiss: DismissAction) -> some View {
+        self.modifier(WithAlerts(viewModel: viewModel, dismiss: dismiss))
     }
 }
