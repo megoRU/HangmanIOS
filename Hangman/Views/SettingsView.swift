@@ -27,6 +27,7 @@ struct SettingsView: View {
 
     @State private var isEditingName = false
     @State private var selectedItem: PhotosPickerItem?
+    @FocusState private var isNameFieldFocused: Bool
 
     let languages = ["RU": "Русский", "EN": "Английский"]
     let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
@@ -42,7 +43,6 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                // MARK: Аватарка + имя
                 Section(header: Text("Профиль")) {
                     HStack(spacing: 16) {
                         PhotosPicker(selection: $selectedItem, matching: .images) {
@@ -71,19 +71,19 @@ struct SettingsView: View {
                             }
                         }
 
-                        Text(name.isEmpty ? "Noname" : name)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.vertical, 6)
-                }
+                        if isEditingName {
+                            TextField("Имя", text: $name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .focused($isNameFieldFocused)
+                                .onSubmit { isEditingName = false }
+                        } else {
+                            Text(name.isEmpty ? "Noname" : name)
+                                .font(.title2)
+                                .fontWeight(.bold)
+                        }
 
-                Section(header: Text("Имя пользователя")) {
-                    HStack {
-                        TextField("Noname", text: $name)
-                            .autocorrectionDisabled()
-                            .textInputAutocapitalization(.words)
-                            .disabled(!isEditingName)
+                        Spacer()
 
                         Button {
                             isEditingName.toggle()
@@ -91,6 +91,16 @@ struct SettingsView: View {
                             Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
                                 .foregroundColor(isEditingName ? .green : .accentColor)
                                 .font(.title2)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isEditingName = true
+                    }
+                    .onChange(of: isEditingName) { editing in
+                        if editing {
+                            isNameFieldFocused = true
                         }
                     }
                 }
