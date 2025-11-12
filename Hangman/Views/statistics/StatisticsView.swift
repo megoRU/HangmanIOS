@@ -43,7 +43,7 @@ struct StatisticsView: View {
                         Text(mode.rawValue).tag(mode)
                     }
                 }
-                .pickerStyle(.menu)
+                .pickerStyle(.segmented)
                 .padding(.horizontal)
 
                 if manager.stats.filter({ $0.mode == selectedMode }).isEmpty {

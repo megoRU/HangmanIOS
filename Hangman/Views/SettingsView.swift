@@ -22,7 +22,7 @@ struct SettingsView: View {
     @AppStorage("gameLanguage") private var selectedLanguage: String = "RU"
     @AppStorage("gameCategory") private var selectedCategory: String = ""
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
-    @AppStorage("name") private var name: String = ""
+    @AppStorage("name") private var name: String = "Noname"
     @AppStorage("avatarImage") private var avatarData: Data?
 
     @State private var isEditingName = false
@@ -71,7 +71,7 @@ struct SettingsView: View {
                             }
                         }
 
-                        Text(name.isEmpty ? "Ваше имя" : name)
+                        Text(name.isEmpty ? "Noname" : name)
                             .font(.title2)
                             .fontWeight(.bold)
                     }
@@ -80,7 +80,7 @@ struct SettingsView: View {
 
                 Section(header: Text("Имя пользователя")) {
                     HStack {
-                        TextField("Ваше имя", text: $name)
+                        TextField("Noname", text: $name)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.words)
                             .disabled(!isEditingName)

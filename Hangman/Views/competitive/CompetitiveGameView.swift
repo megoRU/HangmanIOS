@@ -23,11 +23,12 @@ struct CompetitiveGameView: View {
                 }
                 .multilineTextAlignment(.center)
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingPlayerList = true }) {
-                    Image(systemName: "person.2.fill")
+            if !viewModel.players.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingPlayerList = true }) {
+                        Image(systemName: "person.2.fill")
+                    }
                 }
-                .disabled(viewModel.players.isEmpty)
             }
         }
         .sheet(isPresented: $showingPlayerList) {

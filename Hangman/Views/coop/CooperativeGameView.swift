@@ -23,11 +23,12 @@ struct CooperativeGameView: View {
                         .font(.system(size: 20, weight: .bold))
                 }
             }
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: { showingPlayerList = true }) {
-                    Image(systemName: "person.2.fill")
+            if !viewModel.players.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { showingPlayerList = true }) {
+                        Image(systemName: "person.2.fill")
+                    }
                 }
-                .disabled(viewModel.players.isEmpty)
             }
         }
         .sheet(isPresented: $showingPlayerList) {
@@ -156,7 +157,7 @@ struct CooperativeGameView: View {
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(10)
 
-                    ProgressView("Ожидание подключения...")
+                    ProgressView("Ожидаю подключения друга.")
                     Spacer()
 
                 } else {
