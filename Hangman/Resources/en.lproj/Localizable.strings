@@ -27,6 +27,22 @@
 "support_label" = "Support";
 "version_label" = "Version";
 
+/* Onboarding */
+"onboarding_welcome" = "Welcome!";
+"onboarding_subtitle" = "Let's set up your profile so other players can recognize you.";
+"onboarding_select_photo" = "Select Photo";
+"onboarding_name_placeholder" = "Your Name";
+"onboarding_age_placeholder" = "Your Age";
+"onboarding_continue_button" = "Continue";
+"onboarding_title" = "Profile Creation";
+"onboarding_done_button" = "Done";
+
+/* Settings */
+"age_section_header" = "Age";
+"age_your_age_label" = "Your Age";
+"age_section_footer" = "For safety and community guidelines, age cannot be changed after initial setup. If you are under 18, other players' profile images will be hidden.";
+"age_years" = "%d years old";
+
 /* GameView */
 "loading_word" = "Loading word...";
 "single_player_game_title" = "Single Player";

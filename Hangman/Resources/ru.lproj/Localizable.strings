@@ -27,6 +27,22 @@
 "support_label" = "Поддержка";
 "version_label" = "Версия";
 
+/* Onboarding */
+"onboarding_welcome" = "Добро пожаловать!";
+"onboarding_subtitle" = "Давайте настроим ваш профиль, чтобы другие игроки могли вас узнать.";
+"onboarding_select_photo" = "Выбрать фото";
+"onboarding_name_placeholder" = "Ваше имя";
+"onboarding_age_placeholder" = "Ваш возраст";
+"onboarding_continue_button" = "Продолжить";
+"onboarding_title" = "Создание профиля";
+"onboarding_done_button" = "Готово";
+
+/* Settings */
+"age_section_header" = "Возраст";
+"age_your_age_label" = "Ваш возраст";
+"age_section_footer" = "В целях безопасности и соблюдения правил сообщества, возраст нельзя изменить после первоначальной установки. Если вам меньше 18 лет, изображения профилей других игроков будут скрыты.";
+"age_years" = "%d лет";
+
 /* GameView */
 "loading_word" = "Загрузка слова...";
 "single_player_game_title" = "Одиночная";

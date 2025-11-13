@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PlayerListView: View {
+    @AppStorage("userAge") private var userAge: Int = 0
     let players: [Player]
     @Environment(\.dismiss) private var dismiss
 
@@ -8,7 +9,8 @@ struct PlayerListView: View {
         NavigationView {
             List(players) { player in
                 HStack {
-                    if let base64String = player.image,
+                    if userAge >= 18,
+                       let base64String = player.image,
                        let imageData = Data(base64Encoded: base64String),
                        let uiImage = UIImage(data: imageData) {
                         Image(uiImage: uiImage)
