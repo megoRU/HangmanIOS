@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage("gameCategory") private var selectedCategory: String = ""
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
     @AppStorage("name") private var name: String = "Noname"
+    @AppStorage("userAge") private var userAge: Int = 0
     @AppStorage("avatarImage") private var avatarData: Data?
 
     @State private var isEditingName = false
@@ -112,6 +113,15 @@ struct SettingsView: View {
                         if editing {
                             isNameFieldFocused = true
                         }
+                    }
+                }
+
+                Section(header: Text(NSLocalizedString("age_section_header", comment: "")), footer: Text(NSLocalizedString("age_section_footer", comment: ""))) {
+                    HStack {
+                        Label(NSLocalizedString("age_your_age_label", comment: ""), systemImage: "person.badge.clock")
+                        Spacer()
+                        Text(String(format: NSLocalizedString("age_years", comment: ""), userAge))
+                            .foregroundColor(.secondary)
                     }
                 }
 
