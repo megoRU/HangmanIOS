@@ -8,9 +8,9 @@ enum AppTheme: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var displayName: String {
         switch self {
-        case .system: return "Системная"
-        case .light: return "Светлая"
-        case .dark: return "Тёмная"
+        case .system: return NSLocalizedString("theme_system", comment: "")
+        case .light: return NSLocalizedString("theme_light", comment: "")
+        case .dark: return NSLocalizedString("theme_dark", comment: "")
         }
     }
 }
@@ -29,8 +29,8 @@ struct SettingsView: View {
     @State private var selectedItem: PhotosPickerItem?
     @FocusState private var isNameFieldFocused: Bool
 
-    let languages = ["RU": "Русский", "EN": "Английский"]
-    let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+    let languages = ["RU": NSLocalizedString("language_russian", comment: ""), "EN": NSLocalizedString("language_english", comment: "")]
+    let categories = ["": NSLocalizedString("category_any", comment: ""), "colors": NSLocalizedString("category_colors", comment: ""), "flowers": NSLocalizedString("category_flowers", comment: ""), "fruits": NSLocalizedString("category_fruits", comment: "")]
 
     var avatarImage: Image {
         if let data = avatarData, let uiImage = UIImage(data: data) {
@@ -43,7 +43,7 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Профиль")) {
+                Section(header: Text(NSLocalizedString("profile_section", comment: ""))) {
                     HStack(spacing: 16) {
                         PhotosPicker(selection: $selectedItem, matching: .images) {
                             avatarImage
@@ -72,7 +72,7 @@ struct SettingsView: View {
                         }
 
                         if isEditingName {
-                            TextField("Имя", text: $name)
+                            TextField(NSLocalizedString("name_placeholder", comment: ""), text: $name)
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .focused($isNameFieldFocused)
@@ -116,55 +116,55 @@ struct SettingsView: View {
                 }
 
                 // MARK: Язык
-                Section(header: Text("Язык игры")) {
+                Section(header: Text(NSLocalizedString("game_language_section", comment: ""))) {
                     Picker(selection: $selectedLanguage) {
                         ForEach(languages.keys.sorted(), id: \.self) { key in
                             Text(languages[key] ?? key)
                                 .tag(key)
                         }
                     } label: {
-                        Label("Язык", systemImage: "globe")
+                        Label(NSLocalizedString("language_label", comment: ""), systemImage: "globe")
                     }
                 }
 
                 // MARK: Категория
-                Section(header: Text("Категория"), footer: Text("Эта настройка применяется только для одиночной игры.")) {
+                Section(header: Text(NSLocalizedString("category_section", comment: "")), footer: Text(NSLocalizedString("category_footer", comment: ""))) {
                     Picker(selection: $selectedCategory) {
                         ForEach(categories.keys.sorted(), id: \.self) { key in
                             Text(categories[key] ?? key)
                                 .tag(key)
                         }
                     } label: {
-                        Label("Категория", systemImage: "tag")
+                        Label(NSLocalizedString("category_section", comment: ""), systemImage: "tag")
                     }
                 }
 
                 // MARK: Оформление
-                Section(header: Text("Оформление")) {
+                Section(header: Text(NSLocalizedString("appearance_section", comment: ""))) {
                     Picker(selection: $selectedTheme) {
                         ForEach(AppTheme.allCases) { theme in
                             Text(theme.displayName).tag(theme.rawValue)
                         }
                     } label: {
-                        Label("Тема", systemImage: "paintbrush")
+                        Label(NSLocalizedString("theme_label", comment: ""), systemImage: "paintbrush")
                     }
                 }
 
                 Section {
                     Link(destination: URL(string: "https://t.me/mego_RU")!) {
-                        Label("Поддержка", systemImage: "link")
+                        Label(NSLocalizedString("support_label", comment: ""), systemImage: "link")
                     }
                 }
 
                 Section {
                     HStack {
-                        Label("Версия", systemImage: "info.circle")
+                        Label(NSLocalizedString("version_label", comment: ""), systemImage: "info.circle")
                         Spacer()
                         Text("3.0.0")
                     }
                 }
             }
-            .navigationTitle("Настройки")
+            .navigationTitle(NSLocalizedString("settings_tab", comment: ""))
         }
     }
 }

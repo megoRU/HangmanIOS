@@ -1,0 +1,40 @@
+/* MainMenuView */
+"single_player" = "🎮 Одиночная";
+"multiplayer" = "👥 Мультиплеер";
+"main_menu_title" = "Hangman";
+"home_tab" = "Главная";
+"statistics_tab" = "Статистика";
+"settings_tab" = "Настройки";
+
+/* SettingsView */
+"theme_system" = "Системная";
+"theme_light" = "Светлая";
+"theme_dark" = "Тёмная";
+"language_russian" = "Русский";
+"language_english" = "Английский";
+"category_any" = "Любая";
+"category_colors" = "Цвета";
+"category_flowers" = "Цветы";
+"category_fruits" = "Фрукты";
+"profile_section" = "Профиль";
+"name_placeholder" = "Имя";
+"game_language_section" = "Язык игры";
+"language_label" = "Язык";
+"category_section" = "Категория";
+"category_footer" = "Эта настройка применяется только для одиночной игры.";
+"appearance_section" = "Оформление";
+"theme_label" = "Тема";
+"support_label" = "Поддержка";
+"version_label" = "Версия";
+
+/* GameView */
+"loading_word" = "Загрузка слова...";
+"single_player_game_title" = "Одиночная";
+"category_display" = "Категория: %@";
+"game_over_alert_title" = "Игра окончена";
+"game_over_lose_message" = "Вы проиграли! Слово: %@";
+"game_over_win_message" = "Вы выиграли! Слово: %@";
+"loading_error_alert_title" = "Ошибка загрузки";
+"retry_button" = "Повторить";
+"back_button" = "Назад";
+"loading_error_message" = "Не удалось загрузить слово. Проверьте интернет-соединение и попробуйте снова.";

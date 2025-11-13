@@ -1,0 +1,40 @@
+/* MainMenuView */
+"single_player" = "🎮 Single Player";
+"multiplayer" = "👥 Multiplayer";
+"main_menu_title" = "Hangman";
+"home_tab" = "Home";
+"statistics_tab" = "Statistics";
+"settings_tab" = "Settings";
+
+/* SettingsView */
+"theme_system" = "System";
+"theme_light" = "Light";
+"theme_dark" = "Dark";
+"language_russian" = "Russian";
+"language_english" = "English";
+"category_any" = "Any";
+"category_colors" = "Colors";
+"category_flowers" = "Flowers";
+"category_fruits" = "Fruits";
+"profile_section" = "Profile";
+"name_placeholder" = "Name";
+"game_language_section" = "Game Language";
+"language_label" = "Language";
+"category_section" = "Category";
+"category_footer" = "This setting only applies to single player mode.";
+"appearance_section" = "Appearance";
+"theme_label" = "Theme";
+"support_label" = "Support";
+"version_label" = "Version";
+
+/* GameView */
+"loading_word" = "Loading word...";
+"single_player_game_title" = "Single Player";
+"category_display" = "Category: %@";
+"game_over_alert_title" = "Game Over";
+"game_over_lose_message" = "You lost! The word was: %@";
+"game_over_win_message" = "You won! The word was: %@";
+"loading_error_alert_title" = "Loading Error";
+"retry_button" = "Retry";
+"back_button" = "Back";
+"loading_error_message" = "Failed to load the word. Please check your internet connection and try again.";
