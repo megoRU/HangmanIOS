@@ -10,6 +10,7 @@ import UserNotifications
 
 @main
 struct HangmanApp: App {
+    @AppStorage("isOnboardingCompleted") private var isOnboardingCompleted: Bool = false
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
     @Environment(\.scenePhase) private var scenePhase
     private let webSocketManager = WebSocketManager.shared
@@ -41,14 +42,18 @@ struct HangmanApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                MainMenuView()
-                    .preferredColorScheme(preferredScheme)
+            if isOnboardingCompleted {
+                ZStack {
+                    MainMenuView()
+                        .preferredColorScheme(preferredScheme)
 
-                DynamicBubbleView() // поверх
-            }
-            .onChange(of: scenePhase) { newPhase in
-                webSocketManager.handleScenePhaseChange(to: newPhase)
+                    DynamicBubbleView() // поверх
+                }
+                .onChange(of: scenePhase) { newPhase in
+                    webSocketManager.handleScenePhaseChange(to: newPhase)
+                }
+            } else {
+                OnboardingView()
             }
         }
     }

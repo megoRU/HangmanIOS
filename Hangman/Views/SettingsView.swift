@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage("gameCategory") private var selectedCategory: String = ""
     @AppStorage("appTheme") private var selectedTheme: String = AppTheme.system.rawValue
     @AppStorage("name") private var name: String = "Noname"
+    @AppStorage("userAge") private var userAge: Int = 0
     @AppStorage("avatarImage") private var avatarData: Data?
 
     @State private var isEditingName = false
@@ -112,6 +113,15 @@ struct SettingsView: View {
                         if editing {
                             isNameFieldFocused = true
                         }
+                    }
+                }
+
+                Section(header: Text("Возраст"), footer: Text("В целях безопасности и соблюдения правил сообщества, возраст нельзя изменить после первоначальной установки. Если вам меньше 18 лет, изображения профилей других игроков будут скрыты.")) {
+                    HStack {
+                        Label("Ваш возраст", systemImage: "person.badge.clock")
+                        Spacer()
+                        Text("\(userAge) лет")
+                            .foregroundColor(.secondary)
                     }
                 }
 
