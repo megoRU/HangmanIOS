@@ -23,7 +23,7 @@ struct MainMenuView: View {
                         }
                     
                     NavigationLink(destination: GameView()) {
-                        Text("🎮 Одиночная")
+                        Text(NSLocalizedString("single_player", comment: ""))
                             .font(.title2)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -34,7 +34,7 @@ struct MainMenuView: View {
                     }
                     
                     NavigationLink(destination: MultiplayerMenuView()) {
-                        Text("👥 Мультиплеер")
+                        Text(NSLocalizedString("multiplayer", comment: ""))
                             .font(.title2)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -48,7 +48,7 @@ struct MainMenuView: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .principal) {
-                        Text("Hangman")
+                        Text(NSLocalizedString("main_menu_title", comment: ""))
                             .font(.system(size: 28, weight: .bold)) // размер и жирность
                             .multilineTextAlignment(.center)         // центрирование
                     }
@@ -56,25 +56,25 @@ struct MainMenuView: View {
             }
             
             .tabItem {
-                Label("Главная", systemImage: "house")
+                Label(NSLocalizedString("home_tab", comment: ""), systemImage: "house")
             }
             
             // Статистика
             NavigationStack {
                 StatisticsView()
-                    .navigationTitle("Статистика")
+                    .navigationTitle(NSLocalizedString("statistics_tab", comment: ""))
             }
             .tabItem {
-                Label("Статистика", systemImage: "chart.bar")
+                Label(NSLocalizedString("statistics_tab", comment: ""), systemImage: "chart.bar")
             }
             
             // Настройки
             NavigationStack {
                 SettingsView()
-                    .navigationTitle("Настройки")
+                    .navigationTitle(NSLocalizedString("settings_tab", comment: ""))
             }
             .tabItem {
-                Label("Настройки", systemImage: "gear")
+                Label(NSLocalizedString("settings_tab", comment: ""), systemImage: "gear")
             }
         }
     }

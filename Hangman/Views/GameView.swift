@@ -13,7 +13,14 @@ struct GameView: View {
     @State private var isLoading = true
     @State private var showErrorAlert = false
     
-    let categories = ["": "Любая", "colors": "Цвета", "flowers": "Цветы", "fruits": "Фрукты"]
+    private var categories: [String: String] {
+        [
+            "": NSLocalizedString("category_any", comment: ""),
+            "colors": NSLocalizedString("category_colors", comment: ""),
+            "flowers": NSLocalizedString("category_flowers", comment: ""),
+            "fruits": NSLocalizedString("category_fruits", comment: "")
+        ]
+    }
     
     private var alphabet: [Character] {
         selectedLanguage == "RU"
@@ -30,7 +37,7 @@ struct GameView: View {
     var body: some View {
         VStack(spacing: 25) {
             if isLoading {
-                ProgressView("Загрузка слова...")
+                ProgressView(NSLocalizedString("loading_word", comment: ""))
                     .frame(maxHeight: .infinity)
             } else {
                 // Картинка фиксированного размера
@@ -69,10 +76,10 @@ struct GameView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
-                    Text("Одиночная")
+                    Text(NSLocalizedString("single_player_game_title", comment: ""))
                         .font(.system(size: 20, weight: .bold))
                     
-                    Text("Категория: \(categories[selectedCategory, default: "Любая"])")
+                    Text(String(format: NSLocalizedString("category_display", comment: ""), categories[selectedCategory, default: NSLocalizedString("category_any", comment: "")]))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.gray)
                 }
@@ -80,10 +87,10 @@ struct GameView: View {
             }
         }
         .navigationTitle("")
-        .alert("Игра окончена", isPresented: .constant(gameOver())) {
+        .alert(NSLocalizedString("game_over_alert_title", comment: ""), isPresented: .constant(gameOver())) {
             Button("OK", action: resetGame)
         } message: {
-            Text(attemptsLeft == 0 ? "Вы проиграли! Слово: \(wordToGuess)" : "Вы выиграли! Слово: \(wordToGuess)")
+            Text(attemptsLeft == 0 ? String(format: NSLocalizedString("game_over_lose_message", comment: ""), wordToGuess) : String(format: NSLocalizedString("game_over_win_message", comment: ""), wordToGuess))
         }
         .onChange(of: gameOver()) { isGameOver in
             if isGameOver {
@@ -96,13 +103,13 @@ struct GameView: View {
                 loadWord()
             }
         }
-        .alert("Ошибка загрузки", isPresented: $showErrorAlert) {
-            Button("Повторить", action: loadWord)
-            Button("Назад") {
+        .alert(NSLocalizedString("loading_error_alert_title", comment: ""), isPresented: $showErrorAlert) {
+            Button(NSLocalizedString("retry_button", comment: ""), action: loadWord)
+            Button(NSLocalizedString("back_button", comment: "")) {
                 dismiss()
             }
         } message: {
-            Text("Не удалось загрузить слово. Проверьте интернет-соединение и попробуйте снова.")
+            Text(NSLocalizedString("loading_error_message", comment: ""))
         }
     }
     
