@@ -102,3 +102,7 @@
 "you_lost_competitive_alert_message" = "Вы проиграли! Слово: %@";
 "you_won_competitive_alert_message" = "Вы выиграли! Слово: %@";
 "waiting_for_opponent_progress" = "Ожидание соперника...";
+
+/* Player List */
+"players_list_title" = "Игроки";
+"done_button" = "Готово";

@@ -32,10 +32,10 @@ struct PlayerListView: View {
                         .font(.headline)
                 }
             }
-            .navigationTitle("Игроки")
+            .navigationTitle(NSLocalizedString("players_list_title", comment: ""))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Готово") {
+                    Button(NSLocalizedString("done_button", comment: "")) {
                         dismiss()
                     }
                 }

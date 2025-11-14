@@ -102,3 +102,7 @@
 "you_lost_competitive_alert_message" = "You lost! The word was: %@";
 "you_won_competitive_alert_message" = "You won! The word was: %@";
 "waiting_for_opponent_progress" = "Waiting for an opponent...";
+
+/* Player List */
+"players_list_title" = "Players";
+"done_button" = "Done";
