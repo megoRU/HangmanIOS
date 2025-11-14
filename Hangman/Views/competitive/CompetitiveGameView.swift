@@ -18,7 +18,7 @@ struct CompetitiveGameView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
-                    Text("Соревновательный")
+                    Text(NSLocalizedString("competitive_game_title", comment: ""))
                         .font(.system(size: 20, weight: .bold))
                 }
                 .multilineTextAlignment(.center)
@@ -34,17 +34,17 @@ struct CompetitiveGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
-        .alert("Игра окончена", isPresented: .constant(viewModel.isGameOver)) {
-            Button("Новая игра") {
+        .alert(NSLocalizedString("game_over_alert_title", comment: ""), isPresented: .constant(viewModel.isGameOver)) {
+            Button(NSLocalizedString("new_game_button", comment: "")) {
                 viewModel.resetAndFindGame()
             }
-            Button("Выйти") {
+            Button(NSLocalizedString("exit_button", comment: "")) {
                 dismiss()
             }
         } message: {
-            Text(viewModel.gameResult == "LOSE" ? "Вы проиграли! Слово: \(viewModel.wordToGuess)" : "Вы выиграли! Слово: \(viewModel.wordToGuess)")
+            Text(viewModel.gameResult == "LOSE" ? String(format: NSLocalizedString("you_lost_competitive_alert_message", comment: ""), viewModel.wordToGuess) : String(format: NSLocalizedString("you_won_competitive_alert_message", comment: ""), viewModel.wordToGuess))
         }
-        .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
+        .alert(NSLocalizedString("error_alert_title", comment: ""), isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
                 viewModel.errorMessage = nil
             }
@@ -74,7 +74,7 @@ struct CompetitiveGameView: View {
 
     private var waitingView: some View {
         VStack(spacing: 16) {
-            ProgressView("Ожидание соперника...")
+            ProgressView(NSLocalizedString("waiting_for_opponent_progress", comment: ""))
         }
     }
     

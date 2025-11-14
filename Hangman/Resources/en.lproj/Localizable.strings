@@ -54,3 +54,55 @@
 "retry_button" = "Retry";
 "back_button" = "Back";
 "loading_error_message" = "Failed to load the word. Please check your internet connection and try again.";
+
+/* Statistics */
+"statistics_title" = "Statistics";
+"single_player" = "Single";
+"competitive" = "Competitive";
+"cooperative" = "Cooperative";
+"wins" = "Wins";
+"losses" = "Losses";
+"win_rate" = "Win Rate";
+"date" = "Date";
+"count" = "Count";
+"result" = "Result";
+"wins_chart" = "Wins";
+"losses_chart" = "Losses";
+"no_data_to_display" = "No data to display";
+"game_mode_picker_title" = "Game Mode";
+
+/* Multiplayer */
+"cooperative_game_title" = "Cooperative Game";
+"competitive_game_title" = "Competitive";
+"multiplayer_title" = "Multiplayer";
+"play_1_vs_1" = "⚔️ Play 1 vs 1";
+"create_game" = "🎮 Create Game";
+"join_game" = "🔗 Join Game";
+
+/* Cooperative Game */
+"join_game_title" = "Join Game";
+"join_game_subtitle" = "Enter the code your friend sent you to start the game.";
+"game_code_placeholder" = "Game Code";
+"connect_button" = "Connect";
+"room_created_title" = "Room Created!";
+"share_code_prompt" = "Share this code with your friend:";
+"waiting_for_friend_progress" = "Waiting for a friend to connect.";
+"creating_room_progress" = "Creating room...";
+"you_won_alert_title" = "You Won!";
+"you_lost_alert_title" = "You Lost!";
+"continue_button" = "Continue";
+"exit_button" = "Exit";
+"word_was_alert_message" = "The word was: %@. Ready for the next game?";
+"error_alert_title" = "Error";
+"game_over_alert_title" = "Game Over!";
+"opponent_left_alert_message" = "Your opponent has left the game. You win!";
+
+/* Competitive Game */
+"new_game_button" = "New Game";
+"you_lost_competitive_alert_message" = "You lost! The word was: %@";
+"you_won_competitive_alert_message" = "You won! The word was: %@";
+"waiting_for_opponent_progress" = "Waiting for an opponent...";
+
+/* Player List */
+"players_list_title" = "Players";
+"done_button" = "Done";

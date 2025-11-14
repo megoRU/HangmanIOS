@@ -38,9 +38,9 @@ struct StatisticsView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 20) {
-                Picker("Режим игры", selection: $selectedMode) {
+                Picker(NSLocalizedString("game_mode_picker_title", comment: ""), selection: $selectedMode) {
                     ForEach(GameMode.allCases) { mode in
-                        Text(mode.rawValue).tag(mode)
+                        Text(mode.localizedString).tag(mode)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -49,49 +49,49 @@ struct StatisticsView: View {
                 if manager.stats.filter({ $0.mode == selectedMode }).isEmpty {
                     VStack {
                         Spacer()
-                        Text("Нет данных для отображения")
+                        Text(NSLocalizedString("no_data_to_display", comment: ""))
                             .font(.headline)
                             .foregroundColor(.secondary)
                         Spacer()
                     }
                 } else {
                     HStack(spacing: 20) {
-                        StatCard(title: "Побед", value: "\(totalWins)", color: .green)
-                        StatCard(title: "Поражений", value: "\(totalLosses)", color: .red)
-                        StatCard(title: "Процент побед", value: String(format: "%.0f%%", winRate * 100), color: .blue)
+                        StatCard(title: NSLocalizedString("wins", comment: ""), value: "\(totalWins)", color: .green)
+                        StatCard(title: NSLocalizedString("losses", comment: ""), value: "\(totalLosses)", color: .red)
+                        StatCard(title: NSLocalizedString("win_rate", comment: ""), value: String(format: "%.0f%%", winRate * 100), color: .blue)
                     }
                     .padding(.horizontal)
                     
                     Chart {
                         ForEach(chartData, id: \.date) { item in
                             LineMark(
-                                x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.wins)
+                                x: .value(NSLocalizedString("date", comment: ""), item.date, unit: .day),
+                                y: .value(NSLocalizedString("count", comment: ""), item.wins)
                             )
-                            .foregroundStyle(by: .value("Результат", "Победы"))
+                            .foregroundStyle(by: .value(NSLocalizedString("result", comment: ""), NSLocalizedString("wins_chart", comment: "")))
 
                             PointMark(
-                                x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.wins)
+                                x: .value(NSLocalizedString("date", comment: ""), item.date, unit: .day),
+                                y: .value(NSLocalizedString("count", comment: ""), item.wins)
                             )
-                            .foregroundStyle(by: .value("Результат", "Победы"))
+                            .foregroundStyle(by: .value(NSLocalizedString("result", comment: ""), NSLocalizedString("wins_chart", comment: "")))
 
                             LineMark(
-                                x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.losses)
+                                x: .value(NSLocalizedString("date", comment: ""), item.date, unit: .day),
+                                y: .value(NSLocalizedString("count", comment: ""), item.losses)
                             )
-                            .foregroundStyle(by: .value("Результат", "Поражения"))
+                            .foregroundStyle(by: .value(NSLocalizedString("result", comment: ""), NSLocalizedString("losses_chart", comment: "")))
 
                             PointMark(
-                                x: .value("Дата", item.date, unit: .day),
-                                y: .value("Количество", item.losses)
+                                x: .value(NSLocalizedString("date", comment: ""), item.date, unit: .day),
+                                y: .value(NSLocalizedString("count", comment: ""), item.losses)
                             )
-                            .foregroundStyle(by: .value("Результат", "Поражения"))
+                            .foregroundStyle(by: .value(NSLocalizedString("result", comment: ""), NSLocalizedString("losses_chart", comment: "")))
                         }
                     }
                     .chartForegroundStyleScale([
-                        "Победы": .green,
-                        "Поражения": .red
+                        NSLocalizedString("wins_chart", comment: ""): .green,
+                        NSLocalizedString("losses_chart", comment: ""): .red
                     ])
                     .chartXAxis {
                         AxisMarks(values: .stride(by: .day)) { value in
@@ -111,7 +111,7 @@ struct StatisticsView: View {
             }
             .padding(.top)
         }
-        .navigationTitle("Статистика")
+        .navigationTitle(NSLocalizedString("statistics_title", comment: ""))
     }
 }
 

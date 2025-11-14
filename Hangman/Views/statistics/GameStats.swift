@@ -1,11 +1,15 @@
 import Foundation
 
 enum GameMode: String, CaseIterable, Identifiable, Codable {
-    case single = "Одиночная"
-    case multiplayer = "1 vs 1"
-    case cooperative = "Совместная"
+    case single = "single_player"
+    case multiplayer = "competitive"
+    case cooperative = "cooperative"
     
     var id: String { self.rawValue }
+
+    var localizedString: String {
+        NSLocalizedString(self.rawValue, comment: "")
+    }
 }
 
 enum GameResult: String, Codable {
