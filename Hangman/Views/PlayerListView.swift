@@ -22,7 +22,7 @@ struct PlayerListView: View {
                         Image(systemName: "person.fill")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 40, height: 40)
+                            .frame(width: 24, height: 24)
                             .clipShape(Circle())
                             .padding(8)
                             .background(Color.gray.opacity(0.2))

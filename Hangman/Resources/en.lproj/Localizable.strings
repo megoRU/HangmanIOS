@@ -45,7 +45,7 @@
 
 /* GameView */
 "loading_word" = "Loading word...";
-"single_player_game_title" = "Single Player";
+"single_player_game_title" = "Single";
 "category_display" = "Category: %@";
 "game_over_alert_title" = "Game Over";
 "game_over_lose_message" = "You lost! The word was: %@";
@@ -105,4 +105,4 @@
 
 /* Player List */
 "players_list_title" = "Players";
-"done_button" = "Done";
+"done_button" = "Close";

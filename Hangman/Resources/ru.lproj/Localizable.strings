@@ -58,7 +58,7 @@
 /* Statistics */
 "statistics_title" = "Статистика";
 "single_player" = "Одиночная";
-"competitive" = "Соревновательный";
+"competitive" = "1 vs 1";
 "cooperative" = "Совместный";
 "wins" = "Побед";
 "losses" = "Поражений";
@@ -105,4 +105,4 @@
 
 /* Player List */
 "players_list_title" = "Игроки";
-"done_button" = "Готово";
+"done_button" = "Закрыть";

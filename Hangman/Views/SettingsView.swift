@@ -67,14 +67,6 @@ struct SettingsView: View {
                                 .scaledToFill()
                                 .frame(width: 50, height: 50)
                                 .clipShape(Circle())
-                                .overlay(alignment: .bottomTrailing) {
-                                    Image(systemName: "camera.fill")
-                                        .font(.system(size: 12))
-                                        .padding(6)
-                                        .background(.gray.opacity(0.7))
-                                        .clipShape(Circle())
-                                        .foregroundColor(.white)
-                                }
                         }
                         .buttonStyle(.plain)
                         .onChange(of: selectedItem) { _ in
@@ -90,7 +82,6 @@ struct SettingsView: View {
                         if isEditingName {
                             TextField(NSLocalizedString("name_placeholder", comment: ""), text: $name)
                                 .font(.title2)
-                                .fontWeight(.bold)
                                 .focused($isNameFieldFocused)
                                 .onSubmit {
                                     commitName()
@@ -98,7 +89,6 @@ struct SettingsView: View {
                         } else {
                             Text(name.isEmpty ? "Noname" : name)
                                 .font(.title2)
-                                .fontWeight(.bold)
                                 .onTapGesture {
                                     isEditingName = true
                                     isNameFieldFocused = true
