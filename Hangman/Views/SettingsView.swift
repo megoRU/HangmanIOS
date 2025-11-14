@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 enum AppTheme: String, CaseIterable, Identifiable {
     case system
@@ -14,9 +15,6 @@ enum AppTheme: String, CaseIterable, Identifiable {
         }
     }
 }
-
-import SwiftUI
-import PhotosUI
 
 struct SettingsView: View {
     @AppStorage("gameLanguage") private var selectedLanguage: String = "RU"
@@ -41,11 +39,28 @@ struct SettingsView: View {
         }
     }
 
+    // ВАЖНО — вынесено сюда
+    func saveName() {
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            name = "Noname"
+        }
+        isEditingName = false
+    }
+    
+    func commitName() {
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            name = "Noname"
+        }
+        isEditingName = false
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section(header: Text(NSLocalizedString("profile_section", comment: ""))) {
+
                     HStack(spacing: 16) {
+
                         PhotosPicker(selection: $selectedItem, matching: .images) {
                             avatarImage
                                 .resizable()
@@ -78,45 +93,38 @@ struct SettingsView: View {
                                 .fontWeight(.bold)
                                 .focused($isNameFieldFocused)
                                 .onSubmit {
-                                    if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                        name = "Noname"
-                                    }
-                                    isEditingName = false
+                                    commitName()
                                 }
                         } else {
                             Text(name.isEmpty ? "Noname" : name)
                                 .font(.title2)
                                 .fontWeight(.bold)
+                                .onTapGesture {
+                                    isEditingName = true
+                                    isNameFieldFocused = true
+                                }
                         }
 
                         Spacer()
 
                         Button {
                             if isEditingName {
-                                if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    name = "Noname"
-                                }
+                                commitName()
+                            } else {
+                                isEditingName = true
+                                isNameFieldFocused = true
                             }
-                            isEditingName.toggle()
                         } label: {
                             Image(systemName: isEditingName ? "checkmark.circle.fill" : "pencil")
                                 .foregroundColor(isEditingName ? .green : .accentColor)
                                 .font(.title2)
                         }
                     }
-                    .padding(.vertical, 6)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isEditingName = true
-                    }
-                    .onChange(of: isEditingName) { editing in
-                        if editing {
-                            isNameFieldFocused = true
-                        }
-                    }
                 }
 
-                Section(header: Text(NSLocalizedString("age_section_header", comment: "")), footer: Text(NSLocalizedString("age_section_footer", comment: ""))) {
+
+                Section(header: Text(NSLocalizedString("age_section_header", comment: "")),
+                        footer: Text(NSLocalizedString("age_section_footer", comment: ""))) {
                     HStack {
                         Label(NSLocalizedString("age_your_age_label", comment: ""), systemImage: "person.badge.clock")
                         Spacer()
@@ -125,31 +133,27 @@ struct SettingsView: View {
                     }
                 }
 
-                // MARK: Язык
                 Section(header: Text(NSLocalizedString("game_language_section", comment: ""))) {
                     Picker(selection: $selectedLanguage) {
                         ForEach(languages.keys.sorted(), id: \.self) { key in
-                            Text(languages[key] ?? key)
-                                .tag(key)
+                            Text(languages[key] ?? key).tag(key)
                         }
                     } label: {
                         Label(NSLocalizedString("language_label", comment: ""), systemImage: "globe")
                     }
                 }
 
-                // MARK: Категория
-                Section(header: Text(NSLocalizedString("category_section", comment: "")), footer: Text(NSLocalizedString("category_footer", comment: ""))) {
+                Section(header: Text(NSLocalizedString("category_section", comment: "")),
+                        footer: Text(NSLocalizedString("category_footer", comment: ""))) {
                     Picker(selection: $selectedCategory) {
                         ForEach(categories.keys.sorted(), id: \.self) { key in
-                            Text(categories[key] ?? key)
-                                .tag(key)
+                            Text(categories[key] ?? key).tag(key)
                         }
                     } label: {
                         Label(NSLocalizedString("category_section", comment: ""), systemImage: "tag")
                     }
                 }
 
-                // MARK: Оформление
                 Section(header: Text(NSLocalizedString("appearance_section", comment: ""))) {
                     Picker(selection: $selectedTheme) {
                         ForEach(AppTheme.allCases) { theme in

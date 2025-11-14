@@ -40,7 +40,7 @@
 /* Settings */
 "age_section_header" = "Age";
 "age_your_age_label" = "Your Age";
-"age_section_footer" = "For safety and community guidelines, age cannot be changed after initial setup. If you are under 18, other players' profile images will be hidden.";
+"age_section_footer" = "If you are under 18, other players' profile images will be hidden.";
 "age_years" = "%d years old";
 
 /* GameView */

@@ -125,16 +125,6 @@ struct OnboardingView: View {
     }
 }
 
-extension UIImage {
-    func resize(to newSize: CGSize) -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(newSize, false, 1.0)
-        self.draw(in: CGRect(origin: .zero, size: newSize))
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return newImage
-    }
-}
-
 #Preview {
     OnboardingView()
 }
