@@ -59,18 +59,18 @@ struct CooperativeGameView: View {
                 VStack(spacing: 20) {
                     Spacer(minLength: geometry.size.height * 0.1)
 
-                    Text("Присоединиться к игре")
+                    Text(NSLocalizedString("join_game_title", comment: ""))
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .multilineTextAlignment(.center)
 
-                    Text("Введите код, который вам прислал друг, чтобы начать игру.")
+                    Text(NSLocalizedString("join_game_subtitle", comment: ""))
                         .font(.headline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
 
-                    TextField("Код игры", text: $manualJoinId)
+                    TextField(NSLocalizedString("game_code_placeholder", comment: ""), text: $manualJoinId)
                         .font(.system(size: 22, weight: .bold, design: .monospaced))
                         .padding()
                         .background(Color.secondary.opacity(0.1))
@@ -82,7 +82,7 @@ struct CooperativeGameView: View {
                     Button(action: {
                         WebSocketManager.shared.joinMulti(gameId: manualJoinId)
                     }) {
-                        Text("Подключиться")
+                        Text(NSLocalizedString("connect_button", comment: ""))
                             .fontWeight(.semibold)
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -106,10 +106,10 @@ struct CooperativeGameView: View {
                 if viewModel.players.isEmpty {
                     if let gameId = viewModel.gameId {
                         Spacer()
-                        Text("Комната создана!")
+                        Text(NSLocalizedString("room_created_title", comment: ""))
                             .font(.title.bold())
 
-                        Text("Поделитесь этим кодом с другом:")
+                        Text(NSLocalizedString("share_code_prompt", comment: ""))
                         .font(.headline)
                         .foregroundColor(.secondary)
 
@@ -128,11 +128,11 @@ struct CooperativeGameView: View {
                         .background(Color.secondary.opacity(0.1))
                         .cornerRadius(10)
 
-                        ProgressView("Ожидаю подключения друга.")
+                        ProgressView(NSLocalizedString("waiting_for_friend_progress", comment: ""))
                         Spacer()
 
                     } else {
-                        ProgressView("Создание комнаты...")
+                        ProgressView(NSLocalizedString("creating_room_progress", comment: ""))
                     }
                 } else {
                     MultiplayerGameView()
@@ -151,33 +151,33 @@ fileprivate struct WithAlerts: ViewModifier {
     func body(content: Content) -> some View {
         content
             .alert(
-                (viewModel.coopRoundResult?.result ?? "") == "WIN" ? "Вы выиграли!" : "Вы проиграли!",
+                (viewModel.coopRoundResult?.result ?? "") == "WIN" ? NSLocalizedString("you_won_alert_title", comment: "") : NSLocalizedString("you_lost_alert_title", comment: ""),
                 isPresented: .constant(viewModel.coopRoundResult != nil)
             ) {
                 if let payload = viewModel.coopRoundResult {
-                    Button("Продолжить") {
+                    Button(NSLocalizedString("continue_button", comment: "")) {
                         viewModel.continueCoopGame(with: payload)
                     }
                 }
-                Button("Выйти") {
+                Button(NSLocalizedString("exit_button", comment: "")) {
                     dismiss()
                 }
             } message: {
-                Text("Загаданное слово: \(viewModel.wordToGuess). Готовы к следующей игре?")
+                Text(String(format: NSLocalizedString("word_was_alert_message", comment: ""), viewModel.wordToGuess))
             }
-            .alert("Ошибка", isPresented: .constant(viewModel.errorMessage != nil)) {
+            .alert(NSLocalizedString("error_alert_title", comment: ""), isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") {
                     viewModel.errorMessage = nil
                 }
             } message: {
                 Text(viewModel.errorMessage ?? "")
             }
-            .alert("Игра окончена!", isPresented: .constant(viewModel.gameResult != nil)) {
-                Button("Выйти") {
+            .alert(NSLocalizedString("game_over_alert_title", comment: ""), isPresented: .constant(viewModel.gameResult != nil)) {
+                Button(NSLocalizedString("exit_button", comment: "")) {
                     dismiss()
                 }
             } message: {
-                Text("Ваш оппонент покинул игру. Вы победили!")
+                Text(NSLocalizedString("opponent_left_alert_message", comment: ""))
             }
     }
 }
