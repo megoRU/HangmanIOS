@@ -54,3 +54,19 @@
 "retry_button" = "Повторить";
 "back_button" = "Назад";
 "loading_error_message" = "Не удалось загрузить слово. Проверьте интернет-соединение и попробуйте снова.";
+
+/* Statistics */
+"statistics_title" = "Статистика";
+"single_player" = "Одиночная";
+"competitive" = "Соревновательный";
+"cooperative" = "Совместный";
+"wins" = "Побед";
+"losses" = "Поражений";
+"win_rate" = "Процент побед";
+"date" = "Дата";
+"count" = "Количество";
+"result" = "Результат";
+"wins_chart" = "Победы";
+"losses_chart" = "Поражения";
+"no_data_to_display" = "Нет данных для отображения";
+"game_mode_picker_title" = "Режим игры";

@@ -54,3 +54,19 @@
 "retry_button" = "Retry";
 "back_button" = "Back";
 "loading_error_message" = "Failed to load the word. Please check your internet connection and try again.";
+
+/* Statistics */
+"statistics_title" = "Statistics";
+"single_player" = "Single";
+"competitive" = "Competitive";
+"cooperative" = "Cooperative";
+"wins" = "Wins";
+"losses" = "Losses";
+"win_rate" = "Win Rate";
+"date" = "Date";
+"count" = "Count";
+"result" = "Result";
+"wins_chart" = "Wins";
+"losses_chart" = "Losses";
+"no_data_to_display" = "No data to display";
+"game_mode_picker_title" = "Game Mode";
