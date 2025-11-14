@@ -18,7 +18,7 @@ struct CompetitiveGameView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack(spacing: 2) {
-                    Text("Соревновательный")
+                    Text(NSLocalizedString("competitive_game_title", comment: ""))
                         .font(.system(size: 20, weight: .bold))
                 }
                 .multilineTextAlignment(.center)

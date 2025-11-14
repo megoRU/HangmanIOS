@@ -70,3 +70,11 @@
 "losses_chart" = "Losses";
 "no_data_to_display" = "No data to display";
 "game_mode_picker_title" = "Game Mode";
+
+/* Multiplayer */
+"cooperative_game_title" = "Cooperative Game";
+"competitive_game_title" = "Competitive";
+"multiplayer_title" = "Multiplayer";
+"play_1_vs_1" = "⚔️ Play 1 vs 1";
+"create_game" = "🎮 Create Game";
+"join_game" = "🔗 Join Game";

@@ -13,7 +13,7 @@ struct MultiplayerMenuView: View {
                 .frame(height: 350) // или любое подходящее значение
 
             NavigationLink(destination: CompetitiveGameView()) {
-                Text("⚔️ Играть 1 vs 1")
+                Text(NSLocalizedString("play_1_vs_1", comment: ""))
                     .font(.title2)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -24,7 +24,7 @@ struct MultiplayerMenuView: View {
             }
 
             NavigationLink(destination: CooperativeGameView(mode: .friends)) {
-                Text("🎮 Создать игру")
+                Text(NSLocalizedString("create_game", comment: ""))
                     .font(.title2)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -35,7 +35,7 @@ struct MultiplayerMenuView: View {
             }
 
             NavigationLink(destination: CooperativeGameView(mode: .code_friend)) {
-                Text("🔗 Подключиться к игре")
+                Text(NSLocalizedString("join_game", comment: ""))
                     .font(.title2)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -49,7 +49,7 @@ struct MultiplayerMenuView: View {
         }
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("Мультиплеер")
+                Text(NSLocalizedString("multiplayer_title", comment: ""))
                     .font(.system(size: 28, weight: .bold)) // размер и жирность
                     .multilineTextAlignment(.center)         // центрирование
             }

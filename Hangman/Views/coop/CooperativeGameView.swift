@@ -19,7 +19,7 @@ struct CooperativeGameView: View {
         .toolbar {
             ToolbarItem(placement: .principal) {
                 VStack {
-                    Text("Совместная игра")
+                    Text(NSLocalizedString("cooperative_game_title", comment: ""))
                         .font(.system(size: 20, weight: .bold))
                 }
             }
