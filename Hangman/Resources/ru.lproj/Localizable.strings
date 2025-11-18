@@ -1,6 +1,6 @@
 /* MainMenuView */
-"single_player" = "🎮 Одиночная";
-"multiplayer" = "👥 Мультиплеер";
+"single_player" = "Одиночная";
+"multiplayer" = "Мультиплеер";
 "main_menu_title" = "Hangman";
 "home_tab" = "Главная";
 "statistics_tab" = "Статистика";

@@ -35,9 +35,7 @@ struct CooperativeGameView: View {
                     WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
                     dismiss()
                 } label: {
-                    HStack {
-                        Image(systemName: "chevron.left")
-                    }
+                    Text(NSLocalizedString("exit_button", comment: ""))
                 }
             }
         }

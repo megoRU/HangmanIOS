@@ -84,7 +84,7 @@ struct CompetitiveGameView: View {
                     WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
                     dismiss()
                 } label: {
-                    Image(systemName: "chevron.left")
+                    Text(NSLocalizedString("exit_button", comment: ""))
                 }
             }
         }
