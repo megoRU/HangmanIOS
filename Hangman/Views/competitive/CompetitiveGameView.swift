@@ -6,6 +6,9 @@ struct CompetitiveGameView: View {
     @State private var showingPlayerList = false
     @State private var hasStartedSearch = false
 
+    @State private var isGameOver = false
+    @State private var showErrorAlert = false
+
     var body: some View {
         VStack {
             if viewModel.players.isEmpty {
@@ -23,6 +26,7 @@ struct CompetitiveGameView: View {
                 }
                 .multilineTextAlignment(.center)
             }
+
             if !viewModel.players.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingPlayerList = true }) {
@@ -34,7 +38,10 @@ struct CompetitiveGameView: View {
         .sheet(isPresented: $showingPlayerList) {
             PlayerListView(players: viewModel.players)
         }
-        .alert(NSLocalizedString("game_over_alert_title", comment: ""), isPresented: .constant(viewModel.isGameOver)) {
+        .alert(
+            NSLocalizedString("game_over_alert_title", comment: ""),
+            isPresented: $isGameOver
+        ) {
             Button(NSLocalizedString("new_game_button", comment: "")) {
                 viewModel.resetAndFindGame()
             }
@@ -42,14 +49,27 @@ struct CompetitiveGameView: View {
                 dismiss()
             }
         } message: {
-            Text(viewModel.gameResult == "LOSE" ? String(format: NSLocalizedString("you_lost_competitive_alert_message", comment: ""), viewModel.wordToGuess) : String(format: NSLocalizedString("you_won_competitive_alert_message", comment: ""), viewModel.wordToGuess))
+            Text(
+                viewModel.gameResult == "LOSE"
+                ? String(format: NSLocalizedString("you_lost_competitive_alert_message", comment: ""), viewModel.wordToGuess)
+                : String(format: NSLocalizedString("you_won_competitive_alert_message", comment: ""), viewModel.wordToGuess)
+            )
         }
-        .alert(NSLocalizedString("error_alert_title", comment: ""), isPresented: .constant(viewModel.errorMessage != nil)) {
+        .alert(
+            NSLocalizedString("error_alert_title", comment: ""),
+            isPresented: $showErrorAlert
+        ) {
             Button("OK") {
                 viewModel.errorMessage = nil
             }
         } message: {
             Text(viewModel.errorMessage ?? "")
+        }
+        .onChange(of: viewModel.isGameOver) { newValue in
+            isGameOver = newValue
+        }
+        .onChange(of: viewModel.errorMessage) { msg in
+            showErrorAlert = msg != nil
         }
         .onAppear {
             if !hasStartedSearch {
@@ -59,14 +79,12 @@ struct CompetitiveGameView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .navigationBarLeading) {
                 Button {
                     WebSocketManager.shared.leaveGame(gameId: viewModel.gameId)
                     dismiss()
                 } label: {
-                    HStack {
-                        Image(systemName: "chevron.left")
-                    }
+                    Image(systemName: "chevron.left")
                 }
             }
         }

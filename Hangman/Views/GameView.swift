@@ -12,6 +12,7 @@ struct GameView: View {
     @State private var attemptsLeft = 8
     @State private var isLoading = true
     @State private var showErrorAlert = false
+    @State private var isGameOver = false
     
     private var categories: [String: String] {
         [
@@ -40,18 +41,15 @@ struct GameView: View {
                 ProgressView(NSLocalizedString("loading_word", comment: ""))
                     .frame(maxHeight: .infinity)
             } else {
-                // Картинка фиксированного размера
                 Image(String(8 - attemptsLeft))
                     .resizable()
                     .padding(.top, -50)
                 
-                // Слово
                 Text(displayedWord)
                     .font(.system(size: 36, weight: .bold, design: .monospaced))
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
                 
-                // Клавиатура фиксированной высоты
                 LazyVGrid(
                     columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 7),
                     spacing: 8
@@ -69,7 +67,6 @@ struct GameView: View {
                         .disabled(guessedLetters.contains(letter))
                     }
                 }
-                
             }
         }
         .padding()
@@ -79,20 +76,47 @@ struct GameView: View {
                     Text(NSLocalizedString("single_player_game_title", comment: ""))
                         .font(.system(size: 20, weight: .bold))
                     
-                    Text(String(format: NSLocalizedString("category_display", comment: ""), categories[selectedCategory, default: NSLocalizedString("category_any", comment: "")]))
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.gray)
+                    Text(
+                        String(
+                            format: NSLocalizedString("category_display", comment: ""),
+                            categories[selectedCategory, default: NSLocalizedString("category_any", comment: "")]
+                        )
+                    )
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.gray)
                 }
                 .multilineTextAlignment(.center)
             }
         }
         .navigationTitle("")
-        .alert(NSLocalizedString("game_over_alert_title", comment: ""), isPresented: .constant(gameOver())) {
-            Button("OK", action: resetGame)
+        .alert(
+            NSLocalizedString("game_over_alert_title", comment: ""),
+            isPresented: $isGameOver
+        ) {
+            Button(NSLocalizedString("new_game_button", comment: "")) {
+                resetGame()
+            }
+            Button(NSLocalizedString("exit_button", comment: "")) {
+                dismiss()
+            }
         } message: {
-            Text(attemptsLeft == 0 ? String(format: NSLocalizedString("game_over_lose_message", comment: ""), wordToGuess) : String(format: NSLocalizedString("game_over_win_message", comment: ""), wordToGuess))
+            Text(
+                attemptsLeft == 0
+                ? String(format: NSLocalizedString("game_over_lose_message", comment: ""), wordToGuess)
+                : String(format: NSLocalizedString("game_over_win_message", comment: ""), wordToGuess)
+            )
         }
-        .onChange(of: gameOver()) { isGameOver in
+        .onChange(of: attemptsLeft) { _ in
+            isGameOver = gameOver()
+            
+            if isGameOver {
+                let result: GameResult = attemptsLeft == 0 ? .lose : .win
+                manager.addStat(mode: .single, result: result)
+            }
+        }
+        .onChange(of: guessedLetters) { _ in
+            isGameOver = gameOver()
+            
             if isGameOver {
                 let result: GameResult = attemptsLeft == 0 ? .lose : .win
                 manager.addStat(mode: .single, result: result)
@@ -127,6 +151,7 @@ struct GameView: View {
     private func resetGame() {
         guessedLetters.removeAll()
         attemptsLeft = 8
+        isGameOver = false
         loadWord()
     }
     
